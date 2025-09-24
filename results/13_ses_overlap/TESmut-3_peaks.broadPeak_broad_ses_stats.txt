@@ -1,0 +1,8 @@
+Sample: TESmut-3_peaks.broadPeak
+Peak Type: broad
+Total TESmut-3_peaks.broadPeak peaks: 21456
+TESmut-3_peaks.broadPeak peaks overlapping SES: 8758
+Percentage of TESmut-3_peaks.broadPeak peaks overlapping SES: 40.81%
+SES peaks overlapped by TESmut-3_peaks.broadPeak: 8824
+Total SES consensus peaks: 44726
+Percentage of SES peaks covered by TESmut-3_peaks.broadPeak: 19.72%

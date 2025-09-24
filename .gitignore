@@ -1,0 +1,38 @@
+*.zip
+*.gz
+*.bam
+*.bai
+
+logs/
+90-1222471453/
+*.parquet
+*.bed
+*.bw
+*.narrowPeak
+*.motif
+*.motif*
+*.tmp
+
+
+todo.md
+README_ses_overlap_analysis.md
+CLAUDE.md
+
+results/old
+
+results/07_analysis_broad/TEAD1_motifs/
+results/07_analysis_broad/TES_motifs/
+# results/07_analysis_broad/TEAD1_motifs/homerResults
+# results/07_analysis_broad/TES_motifs/knownResults
+# results/07_analysis_broad/TEAD1_motifs/homerResults
+# results/07_analysis_broad/TES_motifs/homerResults
+
+results/07_analysis_narrow/TEAD1_motifs/
+results/07_analysis_narrow/TES_motifs/
+# results/07_analysis_narrow/TEAD1_motifs/knownResults
+# results/07_analysis_narrow/TES_motifs/knownResults
+# results/07_analysis_narrow/TEAD1_motifs/homerResults
+# results/07_analysis_narrow/TES_motifs/knownResults
+
+
+

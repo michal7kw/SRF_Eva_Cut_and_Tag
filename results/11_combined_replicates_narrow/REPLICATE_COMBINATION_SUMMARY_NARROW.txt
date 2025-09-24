@@ -1,0 +1,19 @@
+Cut&Tag Replicate Combination Analysis Summary (NARROW PEAKS)
+Generated on: Wed Sep 17 05:48:21 PM CEST 2025
+=============================================
+
+=== TEAD1 Condition ===
+Total reads in merged BAM: 9047726
+Consensus peaks (≥2 replicates): 11012
+Combined peaks (original): 21712
+
+=== TES Condition ===
+Total reads in merged BAM: 67507468
+Consensus peaks (≥2 replicates): 17601
+Combined peaks (original): 20204
+
+=== TESmut Condition ===
+Total reads in merged BAM: 49898406
+Consensus peaks (≥2 replicates): 13842
+Combined peaks (original): 15777
+

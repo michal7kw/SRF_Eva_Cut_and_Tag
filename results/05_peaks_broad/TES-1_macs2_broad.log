@@ -1,0 +1,55 @@
+INFO  @ Wed, 17 Sep 2025 14:20:10: 
+# Command line: callpeak -t /beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva/results/04_filtered/TES-1_filtered.bam -c /beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva/results/04_filtered/IggMs_filtered.bam -f BAMPE -g hs -n TES-1 --outdir /beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva/results/05_peaks_broad -q 0.05 --broad --broad-cutoff 0.1 --keep-dup all
+# ARGUMENTS LIST:
+# name = TES-1
+# format = BAMPE
+# ChIP-seq file = ['/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva/results/04_filtered/TES-1_filtered.bam']
+# control file = ['/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva/results/04_filtered/IggMs_filtered.bam']
+# effective genome size = 2.70e+09
+# band width = 300
+# model fold = [5, 50]
+# qvalue cutoff for narrow/strong regions = 5.00e-02
+# qvalue cutoff for broad/weak regions = 1.00e-01
+# The maximum gap between significant sites is assigned as the read length/tag size.
+# The minimum length of peaks is assigned as the predicted fragment length "d".
+# Larger dataset will be scaled towards smaller dataset.
+# Range for calculating regional lambda is: 1000 bps and 10000 bps
+# Broad region calling is on
+# Paired-End mode is on
+ 
+INFO  @ Wed, 17 Sep 2025 14:20:10: #1 read fragment files... 
+INFO  @ Wed, 17 Sep 2025 14:20:10: #1 read treatment fragments... 
+INFO  @ Wed, 17 Sep 2025 14:20:14:  1000000 
+INFO  @ Wed, 17 Sep 2025 14:20:17:  2000000 
+INFO  @ Wed, 17 Sep 2025 14:20:21:  3000000 
+INFO  @ Wed, 17 Sep 2025 14:20:24:  4000000 
+INFO  @ Wed, 17 Sep 2025 14:20:28:  5000000 
+INFO  @ Wed, 17 Sep 2025 14:20:32:  6000000 
+INFO  @ Wed, 17 Sep 2025 14:20:35:  7000000 
+INFO  @ Wed, 17 Sep 2025 14:20:39:  8000000 
+INFO  @ Wed, 17 Sep 2025 14:20:43:  9000000 
+INFO  @ Wed, 17 Sep 2025 14:20:46:  10000000 
+INFO  @ Wed, 17 Sep 2025 14:20:50:  11000000 
+INFO  @ Wed, 17 Sep 2025 14:20:53:  12000000 
+INFO  @ Wed, 17 Sep 2025 14:20:57:  13000000 
+INFO  @ Wed, 17 Sep 2025 14:21:01:  14000000 
+INFO  @ Wed, 17 Sep 2025 14:21:01: 14008418 fragments have been read. 
+INFO  @ Wed, 17 Sep 2025 14:21:10: #1.2 read input fragments... 
+INFO  @ Wed, 17 Sep 2025 14:21:13:  1000000 
+INFO  @ Wed, 17 Sep 2025 14:21:16: 1924892 fragments have been read. 
+INFO  @ Wed, 17 Sep 2025 14:21:17: #1 mean fragment size is determined as 148.6 bp from treatment 
+INFO  @ Wed, 17 Sep 2025 14:21:17: #1 note: mean fragment size in control is 131.7 bp -- value ignored 
+INFO  @ Wed, 17 Sep 2025 14:21:17: #1 fragment size = 148.6 
+INFO  @ Wed, 17 Sep 2025 14:21:17: #1  total fragments in treatment: 14008418 
+INFO  @ Wed, 17 Sep 2025 14:21:17: #1  total fragments in control: 1924892 
+INFO  @ Wed, 17 Sep 2025 14:21:17: #1 finished! 
+INFO  @ Wed, 17 Sep 2025 14:21:17: #2 Build Peak Model... 
+INFO  @ Wed, 17 Sep 2025 14:21:17: #2 Skipped... 
+INFO  @ Wed, 17 Sep 2025 14:21:17: #3 Call peaks... 
+INFO  @ Wed, 17 Sep 2025 14:21:17: #3 Call broad peaks with given level1 -log10qvalue cutoff and level2: 1.301030, 1.000000... 
+INFO  @ Wed, 17 Sep 2025 14:21:17: #3 Pre-compute pvalue-qvalue table... 
+INFO  @ Wed, 17 Sep 2025 14:21:38: #3 Call peaks for each chromosome... 
+INFO  @ Wed, 17 Sep 2025 14:21:56: #4 Write output xls file... /beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva/results/05_peaks_broad/TES-1_peaks.xls 
+INFO  @ Wed, 17 Sep 2025 14:21:56: #4 Write broad peak in broadPeak format file... /beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva/results/05_peaks_broad/TES-1_peaks.broadPeak 
+INFO  @ Wed, 17 Sep 2025 14:21:56: #4 Write broad peak in bed12/gappedPeak format file... /beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva/results/05_peaks_broad/TES-1_peaks.gappedPeak 
+INFO  @ Wed, 17 Sep 2025 14:21:56: Done! 
