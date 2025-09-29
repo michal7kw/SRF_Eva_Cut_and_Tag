@@ -1,4 +1,0 @@
-Sample	MACS2	Cutadapt	FastQC
-Cutadapt		5.1	
-FastQC			0.12.1
-MACS2	2.2.7.1		
