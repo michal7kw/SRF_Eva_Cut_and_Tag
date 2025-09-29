@@ -1,0 +1,19 @@
+Cut&Tag Replicate Combination Analysis Summary (BROAD PEAKS)
+Generated on: Wed Sep 17 05:53:45 PM CEST 2025
+=============================================
+
+=== TEAD1 Condition ===
+Total reads in merged BAM: 9047726
+Consensus broad peaks (≥2 replicates): 18404
+Combined broad peaks (original): 27499
+
+=== TES Condition ===
+Total reads in merged BAM: 67507468
+Consensus broad peaks (≥2 replicates): 27605
+Combined broad peaks (original): 29789
+
+=== TESmut Condition ===
+Total reads in merged BAM: 49898406
+Consensus broad peaks (≥2 replicates): 19864
+Combined broad peaks (original): 21706
+
