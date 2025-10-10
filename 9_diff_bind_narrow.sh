@@ -75,7 +75,7 @@
 source /opt/common/tools/ric.cosr/miniconda3/bin/activate
 conda activate diffbind_analysis
 
-BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva"
+BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG"
 
 # Run DiffBind analysis
 Rscript ${BASE_DIR}/scripts/diffbind_analysis.R

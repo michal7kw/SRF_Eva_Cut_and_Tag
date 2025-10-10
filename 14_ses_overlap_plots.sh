@@ -68,7 +68,7 @@ eval "$(conda shell.bash hook)"
 echo "Activating R environment..."
 conda activate peak_calling
 
-BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva"
+BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG"
 cd $BASE_DIR
 
 echo "Starting SES overlap graphical analysis..."

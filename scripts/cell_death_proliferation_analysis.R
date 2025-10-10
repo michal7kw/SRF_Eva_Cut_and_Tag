@@ -28,8 +28,15 @@ library(VennDiagram)
 library(ComplexHeatmap)
 library(RColorBrewer)
 
+# Fix namespace conflicts: clusterProfiler masks dplyr::filter and stats::filter
+# Explicitly use dplyr functions
+filter <- dplyr::filter
+select <- dplyr::select
+mutate <- dplyr::mutate
+arrange <- dplyr::arrange
+
 # Set working directory
-setwd("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva")
+setwd("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG")
 
 # Create output directory
 dir.create("results/cell_death_proliferation", recursive = TRUE, showWarnings = FALSE)

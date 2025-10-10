@@ -46,7 +46,7 @@ echo "Starting narrow peak-specific analysis"
 echo "Date: $(date)"
 echo "=========================================="
 
-BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva"
+BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG"
 cd $BASE_DIR
 
 # Ensure logs directory exists (may already exist from broad pipeline)

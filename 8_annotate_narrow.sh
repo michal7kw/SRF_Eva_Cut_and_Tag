@@ -74,7 +74,7 @@ conda activate annotation_enrichment
 # Load HOMER module
 # module load homer
 
-BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva"
+BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG"
 PEAKS_DIR="${BASE_DIR}/results/05_peaks_narrow"
 ANALYSIS_DIR="${BASE_DIR}/results/07_analysis_narrow"
 

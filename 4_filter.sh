@@ -102,7 +102,7 @@ fi
 PICARD="$PICARD_PATH"
 echo "PICARD set to: $PICARD"
 
-BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva"
+BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG"
 ALIGNED_DIR="${BASE_DIR}/results/03_aligned"
 OUTPUT_DIR="${BASE_DIR}/results/04_filtered"
 

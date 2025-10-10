@@ -81,7 +81,7 @@
 source /opt/common/tools/ric.cosr/miniconda3/bin/activate
 conda activate /beegfs/scratch/ric.sessa/kubacki.michal/conda/envs/alignment
 
-BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva"
+BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG"
 TRIMMED_DIR="${BASE_DIR}/results/02_trimmed"
 OUTPUT_DIR="${BASE_DIR}/results/03_aligned"
 

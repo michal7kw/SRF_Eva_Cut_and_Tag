@@ -76,7 +76,7 @@
 
 conda activate  /beegfs/scratch/ric.sessa/kubacki.michal/conda/envs/trim
 
-BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva"
+BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG"
 FASTQ_DIR="${BASE_DIR}/90-1222471453/00_fastq"
 OUTPUT_DIR="${BASE_DIR}/results/02_trimmed"
 

@@ -75,7 +75,7 @@
 source /opt/common/tools/ric.cosr/miniconda3/bin/activate
 conda activate bigwig
 
-BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva"
+BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG"
 BAM_DIR="${BASE_DIR}/results/04_filtered"
 OUTPUT_DIR="${BASE_DIR}/results/06_bigwig"
 

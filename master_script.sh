@@ -1,7 +1,7 @@
 #!/bin/bash
 # Save as: run_full_pipeline.sh
 
-BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva"
+BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG"
 cd $BASE_DIR
 
 # Submit jobs with dependencies

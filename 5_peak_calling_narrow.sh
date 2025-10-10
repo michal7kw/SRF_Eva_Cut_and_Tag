@@ -79,7 +79,7 @@
 source /opt/common/tools/ric.cosr/miniconda3/bin/activate
 conda activate peak_calling_new
 
-BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva"
+BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG"
 BAM_DIR="${BASE_DIR}/results/04_filtered"
 OUTPUT_DIR="${BASE_DIR}/results/05_peaks_narrow"
 

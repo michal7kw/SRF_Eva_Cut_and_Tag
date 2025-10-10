@@ -11,7 +11,7 @@
 #SBATCH --output="./logs/setup.out"
 
 # Create directory structure for dual-track pipeline
-BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva"
+BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG"
 cd $BASE_DIR
 
 mkdir -p scripts logs config

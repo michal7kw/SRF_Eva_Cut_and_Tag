@@ -77,7 +77,7 @@
 source /opt/common/tools/ric.cosr/miniconda3/bin/activate
 conda activate multiqc
 
-BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva"
+BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG"
 
 echo "=========================================="
 echo "Starting comprehensive dual-track summary"
