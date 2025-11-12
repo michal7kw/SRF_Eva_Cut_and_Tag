@@ -19,19 +19,23 @@
 # 6. Peak count summary and quality metrics
 # 7. Optional diagnostic plot generation
 #
-# METHODOLOGY:
-# - Uses MACS2 callpeak with narrow peak mode (default)
-# - Applies q-value threshold of 0.01 for significance
+# METHODOLOGY (Cut&Tag Optimized):
+# - Uses MACS2 callpeak with Cut&Tag-specific parameters
+# - Applies q-value threshold of 0.05 (recommended for Cut&Tag)
 # - Uses appropriate control samples (IggMs for TES/TESmut, IggRb for TEAD1)
 # - Keeps all duplicate reads (--keep-dup all) as appropriate for Cut&Tag
 # - Automatically selects BAMPE (paired-end) or BAM (single-end) format
+# - Applies Cut&Tag-specific fragment size adjustments
+# - Filters for nucleosome-free fragments (<120bp)
 #
 # IMPORTANT PARAMETERS:
 # - Memory: 16GB (sufficient for peak calling)
 # - Time: 4 hours (adequate for multiple samples)
 # - Threads: 8 (MACS2 is mostly single-threaded but allows parallel processing)
-# - Q-value threshold: 0.01 (stringent significance cutoff)
-# - Genome: hs (human genome size for MACS2)
+# - Q-value threshold: 0.05 (Cut&Tag recommended threshold)
+# - Shift: -75bp (half of expected fragment size for Cut&Tag)
+# - Extsize: 150bp (typical Cut&Tag fragment size)
+# - Genome size: hs (hg38 effective genome size)
 #
 # EXPECTED INPUTS:
 # - Filtered BAM files from step 4 (04_filtered directory)
@@ -176,35 +180,68 @@ echo ""
 echo "Step 2: Running MACS2 peak calling"
 echo "------------------------------------------"
 
-# Function to run MACS2 with error handling
+# Function to run MACS2 with Cut&Tag-optimized parameters
 run_macs2() {
     local treatment_files="$1"
     local control_file="$2"
     local output_name="$3"
     local format="$4"
-    
+
     echo "Calling peaks for $output_name..."
     echo "  Treatment: $treatment_files"
     echo "  Control: $control_file"
     echo "  Format: $format"
-    
-    macs2 callpeak \
-        -t $treatment_files \
-        -c $control_file \
-        -f $format \
-        -g hs \
-        -n $output_name \
-        --outdir ${OUTPUT_DIR} \
-        -q 0.01 \
-        --keep-dup all \
-        2> ${OUTPUT_DIR}/${output_name}_macs2.log
-    
+
+    # Cut&Tag-optimized MACS2 parameters
+    # Key differences from ChIP-seq:
+    # - q-value 0.05 (less stringent, Cut&Tag has lower background)
+    # - shift -75, extsize 150 (typical Cut&Tag fragment size)
+    # - Genome size 2913022398 (hg38 effective genome size)
+    # - keep-dup all (Cut&Tag has low PCR duplication)
+
+    if [ "$format" = "BAMPE" ]; then
+        # For paired-end data, use actual fragment sizes
+        macs2 callpeak \
+            -t $treatment_files \
+            -c $control_file \
+            -f $format \
+            -g 2913022398 \
+            -n $output_name \
+            --outdir ${OUTPUT_DIR} \
+            -q 0.05 \
+            --keep-dup all \
+            2> ${OUTPUT_DIR}/${output_name}_macs2.log
+    else
+        # For single-end data, apply shift and extsize
+        macs2 callpeak \
+            -t $treatment_files \
+            -c $control_file \
+            -f $format \
+            -g 2913022398 \
+            -n $output_name \
+            --outdir ${OUTPUT_DIR} \
+            -q 0.05 \
+            --keep-dup all \
+            --shift -75 \
+            --extsize 150 \
+            --nomodel \
+            2> ${OUTPUT_DIR}/${output_name}_macs2.log
+    fi
+
     if [ $? -eq 0 ]; then
         echo "  SUCCESS: Peak calling completed for $output_name"
         # Count peaks
         if [ -f "${OUTPUT_DIR}/${output_name}_peaks.narrowPeak" ]; then
             peak_count=$(wc -l < "${OUTPUT_DIR}/${output_name}_peaks.narrowPeak")
             echo "  Found $peak_count peaks"
+
+            # Additional quality filtering: keep only high-quality peaks (fold enrichment >= 2)
+            awk '$7 >= 2' "${OUTPUT_DIR}/${output_name}_peaks.narrowPeak" > "${OUTPUT_DIR}/${output_name}_peaks_filtered.narrowPeak"
+            filtered_count=$(wc -l < "${OUTPUT_DIR}/${output_name}_peaks_filtered.narrowPeak")
+            echo "  High-quality peaks (fold enrichment ≥2): $filtered_count"
+
+            # Replace original with filtered peaks
+            mv "${OUTPUT_DIR}/${output_name}_peaks_filtered.narrowPeak" "${OUTPUT_DIR}/${output_name}_peaks.narrowPeak"
         fi
     else
         echo "  ERROR: Peak calling failed for $output_name"

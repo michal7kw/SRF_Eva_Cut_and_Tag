@@ -74,105 +74,155 @@ conda activate bigwig
 
 BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG"
 PEAKS_DIR="${BASE_DIR}/results/05_peaks_narrow"
+CONSENSUS_DIR="${BASE_DIR}/results/11_combined_replicates_narrow"
 BIGWIG_DIR="${BASE_DIR}/results/06_bigwig"
 OUTPUT_DIR="${BASE_DIR}/results/07_analysis_narrow"
 
 # Create output directory if it doesn't exist
 mkdir -p ${OUTPUT_DIR}
 
+# Determine which peak sets to use
+# Priority: 1) Consensus peaks (if available), 2) Combined MACS2 peaks
+echo "Determining peak sets to use for analysis..."
+
+# Function to select best available peak file
+select_peak_file() {
+    local condition=$1
+    local consensus_scored="${CONSENSUS_DIR}/peaks/${condition}_consensus_peaks_scored.bed"
+    local consensus_full="${CONSENSUS_DIR}/peaks/${condition}_consensus_peaks.bed"
+    local idr_union="${CONSENSUS_DIR}/idr/${condition}_idr_union.bed"
+    local macs2_combined="${PEAKS_DIR}/${condition}_peaks.narrowPeak"
+
+    if [ -f "$consensus_scored" ]; then
+        echo "$consensus_scored"
+        echo "  Using quality-scored consensus peaks for $condition" >&2
+    elif [ -f "$consensus_full" ]; then
+        echo "$consensus_full"
+        echo "  Using full consensus peaks for $condition" >&2
+    elif [ -f "$idr_union" ]; then
+        echo "$idr_union"
+        echo "  Using IDR union peaks for $condition" >&2
+    elif [ -f "$macs2_combined" ]; then
+        echo "$macs2_combined"
+        echo "  Using MACS2 combined peaks for $condition (consensus not available)" >&2
+    else
+        echo ""
+        echo "  ERROR: No peak file found for $condition" >&2
+    fi
+}
+
+# Select peak files for each condition
+TES_PEAKS=$(select_peak_file "TES")
+TESMUT_PEAKS=$(select_peak_file "TESmut")
+TEAD1_PEAKS=$(select_peak_file "TEAD1")
+
+# Verify all peak files are available
+if [ -z "$TES_PEAKS" ] || [ -z "$TESMUT_PEAKS" ] || [ -z "$TEAD1_PEAKS" ]; then
+    echo "ERROR: Missing required peak files. Exiting."
+    exit 1
+fi
+
 # 1. Comprehensive peak overlap analysis
-echo "Performing comprehensive peak overlap analysis..."
+# Now using consensus/high-quality peaks instead of raw MACS2 peaks
+echo "Performing comprehensive peak overlap analysis using high-quality peak sets..."
 
 # TES vs TEAD1 overlaps
 bedtools intersect \
-    -a ${PEAKS_DIR}/TES_peaks.narrowPeak \
-    -b ${PEAKS_DIR}/TEAD1_peaks.narrowPeak \
+    -a $TES_PEAKS \
+    -b $TEAD1_PEAKS \
     -u > ${OUTPUT_DIR}/TES_TEAD1_overlap.bed
 
 bedtools intersect \
-    -a ${PEAKS_DIR}/TES_peaks.narrowPeak \
-    -b ${PEAKS_DIR}/TEAD1_peaks.narrowPeak \
+    -a $TES_PEAKS \
+    -b $TEAD1_PEAKS \
     -v > ${OUTPUT_DIR}/TES_specific.bed
 
 bedtools intersect \
-    -a ${PEAKS_DIR}/TEAD1_peaks.narrowPeak \
-    -b ${PEAKS_DIR}/TES_peaks.narrowPeak \
+    -a $TEAD1_PEAKS \
+    -b $TES_PEAKS \
     -v > ${OUTPUT_DIR}/TEAD1_specific.bed
 
 # TES vs TESmut overlaps
 bedtools intersect \
-    -a ${PEAKS_DIR}/TES_peaks.narrowPeak \
-    -b ${PEAKS_DIR}/TESmut_peaks.narrowPeak \
+    -a $TES_PEAKS \
+    -b $TESMUT_PEAKS \
     -u > ${OUTPUT_DIR}/TES_TESmut_overlap.bed
 
 bedtools intersect \
-    -a ${PEAKS_DIR}/TES_peaks.narrowPeak \
-    -b ${PEAKS_DIR}/TESmut_peaks.narrowPeak \
+    -a $TES_PEAKS \
+    -b $TESMUT_PEAKS \
     -v > ${OUTPUT_DIR}/TES_not_in_TESmut.bed
 
 bedtools intersect \
-    -a ${PEAKS_DIR}/TESmut_peaks.narrowPeak \
-    -b ${PEAKS_DIR}/TES_peaks.narrowPeak \
+    -a $TESMUT_PEAKS \
+    -b $TES_PEAKS \
     -v > ${OUTPUT_DIR}/TESmut_specific.bed
 
 # TESmut vs TEAD1 overlaps
 bedtools intersect \
-    -a ${PEAKS_DIR}/TESmut_peaks.narrowPeak \
-    -b ${PEAKS_DIR}/TEAD1_peaks.narrowPeak \
+    -a $TESMUT_PEAKS \
+    -b $TEAD1_PEAKS \
     -u > ${OUTPUT_DIR}/TESmut_TEAD1_overlap.bed
 
 bedtools intersect \
-    -a ${PEAKS_DIR}/TESmut_peaks.narrowPeak \
-    -b ${PEAKS_DIR}/TEAD1_peaks.narrowPeak \
+    -a $TESMUT_PEAKS \
+    -b $TEAD1_PEAKS \
     -v > ${OUTPUT_DIR}/TESmut_not_in_TEAD1.bed
 
 bedtools intersect \
-    -a ${PEAKS_DIR}/TEAD1_peaks.narrowPeak \
-    -b ${PEAKS_DIR}/TESmut_peaks.narrowPeak \
+    -a $TEAD1_PEAKS \
+    -b $TESMUT_PEAKS \
     -v > ${OUTPUT_DIR}/TEAD1_not_in_TESmut.bed
 
 # Three-way overlaps
 echo "Finding three-way overlaps..."
 bedtools intersect \
-    -a ${PEAKS_DIR}/TES_peaks.narrowPeak \
-    -b ${PEAKS_DIR}/TESmut_peaks.narrowPeak \
+    -a $TES_PEAKS \
+    -b $TESMUT_PEAKS \
     -u | bedtools intersect \
     -a stdin \
-    -b ${PEAKS_DIR}/TEAD1_peaks.narrowPeak \
+    -b $TEAD1_PEAKS \
     -u > ${OUTPUT_DIR}/TES_TESmut_TEAD1_overlap.bed
 
 # Peaks unique to each condition (not in any other)
 bedtools intersect \
-    -a ${PEAKS_DIR}/TES_peaks.narrowPeak \
-    -b ${PEAKS_DIR}/TESmut_peaks.narrowPeak \
+    -a $TES_PEAKS \
+    -b $TESMUT_PEAKS \
     -v | bedtools intersect \
     -a stdin \
-    -b ${PEAKS_DIR}/TEAD1_peaks.narrowPeak \
+    -b $TEAD1_PEAKS \
     -v > ${OUTPUT_DIR}/TES_unique.bed
 
 bedtools intersect \
-    -a ${PEAKS_DIR}/TESmut_peaks.narrowPeak \
-    -b ${PEAKS_DIR}/TES_peaks.narrowPeak \
+    -a $TESMUT_PEAKS \
+    -b $TES_PEAKS \
     -v | bedtools intersect \
     -a stdin \
-    -b ${PEAKS_DIR}/TEAD1_peaks.narrowPeak \
+    -b $TEAD1_PEAKS \
     -v > ${OUTPUT_DIR}/TESmut_unique.bed
 
 bedtools intersect \
-    -a ${PEAKS_DIR}/TEAD1_peaks.narrowPeak \
-    -b ${PEAKS_DIR}/TES_peaks.narrowPeak \
+    -a $TEAD1_PEAKS \
+    -b $TES_PEAKS \
     -v | bedtools intersect \
     -a stdin \
-    -b ${PEAKS_DIR}/TESmut_peaks.narrowPeak \
+    -b $TESMUT_PEAKS \
     -v > ${OUTPUT_DIR}/TEAD1_unique.bed
 
 # 2. Generate comprehensive peak overlap statistics
 echo "Generating comprehensive statistics..."
 {
+    echo "=== ANALYSIS USING HIGH-QUALITY PEAK SETS ==="
+    echo "Peak files used:"
+    echo "  TES: $TES_PEAKS"
+    echo "  TESmut: $TESMUT_PEAKS"
+    echo "  TEAD1: $TEAD1_PEAKS"
+    echo ""
+
     echo "=== PEAK COUNTS ==="
-    wc -l ${PEAKS_DIR}/TES_peaks.narrowPeak | awk '{print "TES total peaks: "$1}'
-    wc -l ${PEAKS_DIR}/TESmut_peaks.narrowPeak | awk '{print "TESmut total peaks: "$1}'
-    wc -l ${PEAKS_DIR}/TEAD1_peaks.narrowPeak | awk '{print "TEAD1 total peaks: "$1}'
+    wc -l $TES_PEAKS | awk '{print "TES total peaks: "$1}'
+    wc -l $TESMUT_PEAKS | awk '{print "TESmut total peaks: "$1}'
+    wc -l $TEAD1_PEAKS | awk '{print "TEAD1 total peaks: "$1}'
 
     echo ""
     echo "=== PAIRWISE OVERLAPS ==="
@@ -198,9 +248,9 @@ echo "Generating comprehensive statistics..."
 
     echo ""
     echo "=== OVERLAP PERCENTAGES ==="
-    TES_TOTAL=$(wc -l < ${PEAKS_DIR}/TES_peaks.narrowPeak)
-    TESMUT_TOTAL=$(wc -l < ${PEAKS_DIR}/TESmut_peaks.narrowPeak)
-    TEAD1_TOTAL=$(wc -l < ${PEAKS_DIR}/TEAD1_peaks.narrowPeak)
+    TES_TOTAL=$(wc -l < $TES_PEAKS)
+    TESMUT_TOTAL=$(wc -l < $TESMUT_PEAKS)
+    TEAD1_TOTAL=$(wc -l < $TEAD1_PEAKS)
     TES_TEAD1_OVERLAP=$(wc -l < ${OUTPUT_DIR}/TES_TEAD1_overlap.bed)
     TES_TESMUT_OVERLAP=$(wc -l < ${OUTPUT_DIR}/TES_TESmut_overlap.bed)
     TESMUT_TEAD1_OVERLAP=$(wc -l < ${OUTPUT_DIR}/TESmut_TEAD1_overlap.bed)
@@ -208,6 +258,10 @@ echo "Generating comprehensive statistics..."
     echo "TES-TEAD1 overlap %: $(echo "scale=2; $TES_TEAD1_OVERLAP * 100 / $TES_TOTAL" | bc)% of TES peaks"
     echo "TES-TESmut overlap %: $(echo "scale=2; $TES_TESMUT_OVERLAP * 100 / $TES_TOTAL" | bc)% of TES peaks"
     echo "TESmut-TEAD1 overlap %: $(echo "scale=2; $TESMUT_TEAD1_OVERLAP * 100 / $TESMUT_TOTAL" | bc)% of TESmut peaks"
+
+    echo ""
+    echo "NOTE: These statistics use high-quality consensus peaks (when available)"
+    echo "      which provide better reproducibility than raw MACS2 combined peaks."
 } > ${OUTPUT_DIR}/peak_stats.txt
 
 # 3. Create comprehensive heatmaps and profiles
@@ -260,10 +314,10 @@ create_visualization() {
     convert -density 300 ${OUTPUT_DIR}/${OUTPUT_PREFIX}_profile.pdf ${OUTPUT_DIR}/${OUTPUT_PREFIX}_profile.png
 }
 
-# Create visualizations for all peak sets
-create_visualization "${PEAKS_DIR}/TES_peaks.narrowPeak" "TES_peaks" "TES Narrow Peaks"
-create_visualization "${PEAKS_DIR}/TESmut_peaks.narrowPeak" "TESmut_peaks" "TESmut Narrow Peaks"
-create_visualization "${PEAKS_DIR}/TEAD1_peaks.narrowPeak" "TEAD1_peaks" "TEAD1 Narrow Peaks"
+# Create visualizations for all peak sets (using selected high-quality peaks)
+create_visualization "$TES_PEAKS" "TES_peaks" "TES High-Quality Peaks"
+create_visualization "$TESMUT_PEAKS" "TESmut_peaks" "TESmut High-Quality Peaks"
+create_visualization "$TEAD1_PEAKS" "TEAD1_peaks" "TEAD1 High-Quality Peaks"
 
 # Create visualizations for overlap sets (if they have sufficient peaks)
 if [ -s ${OUTPUT_DIR}/TES_TEAD1_overlap.bed ]; then

@@ -76,12 +76,42 @@ conda activate annotation_enrichment
 
 BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG"
 PEAKS_DIR="${BASE_DIR}/results/05_peaks_narrow"
+CONSENSUS_DIR="${BASE_DIR}/results/11_combined_replicates_narrow"
 ANALYSIS_DIR="${BASE_DIR}/results/07_analysis_narrow"
 
 # Create output directory if it doesn't exist
 mkdir -p ${ANALYSIS_DIR}
 
-# Run R script
+echo "=========================================="
+echo "Starting peak annotation analysis"
+echo "Date: $(date)"
+echo "=========================================="
+
+# Determine which peak sets to use for annotation
+# Priority: consensus peaks > MACS2 combined peaks
+echo "Preparing peak files for annotation..."
+
+for condition in TES TESmut TEAD1; do
+    consensus_scored="${CONSENSUS_DIR}/peaks/${condition}_consensus_peaks_scored.bed"
+    consensus_full="${CONSENSUS_DIR}/peaks/${condition}_consensus_peaks.bed"
+    macs2_peaks="${PEAKS_DIR}/${condition}_peaks.narrowPeak"
+
+    if [ -f "$consensus_scored" ]; then
+        echo "  Using quality-scored consensus peaks for $condition annotation"
+        cp "$consensus_scored" "${ANALYSIS_DIR}/${condition}_peaks_for_annotation.bed"
+    elif [ -f "$consensus_full" ]; then
+        echo "  Using full consensus peaks for $condition annotation"
+        cp "$consensus_full" "${ANALYSIS_DIR}/${condition}_peaks_for_annotation.bed"
+    elif [ -f "$macs2_peaks" ]; then
+        echo "  Using MACS2 combined peaks for $condition annotation (consensus not available)"
+        cp "$macs2_peaks" "${ANALYSIS_DIR}/${condition}_peaks_for_annotation.bed"
+    else
+        echo "  WARNING: No peak file found for $condition"
+    fi
+done
+
+# Run R script for genomic annotation
+echo "Running R annotation script..."
 Rscript ${BASE_DIR}/scripts/annotate_peaks.R
 
 # HOMER motif analysis for TES peaks (COMMENTED OUT)

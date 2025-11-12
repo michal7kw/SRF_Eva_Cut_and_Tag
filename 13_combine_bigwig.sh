@@ -4,6 +4,15 @@
 # SCRIPT: 13_combine_bigwig.sh
 # PURPOSE: Combine replicate BigWig files into group-level averages.
 #
+# **IMPORTANT NOTE**: This script is now OPTIONAL/LEGACY
+# Step 11 (11_combine_replicates_narrow.sh) already creates average BigWig
+# tracks using bamCoverage on merged BAM files, which is the preferred method
+# for Cut&Tag data. This script creates averages from individual BigWig files,
+# which is an alternative approach but less optimal.
+#
+# **RECOMMENDATION**: Use the BigWig files from step 11 instead:
+#   results/11_combined_replicates_narrow/bigwig/*_average.bw
+#
 # DESCRIPTION:
 # This script takes multiple BigWig files from individual replicates of a
 # ChIP-seq or Cut&Tag experiment and computes an average signal track for each
@@ -64,6 +73,18 @@ conda activate bigwig
 BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG"
 BIGWIG_DIR="${BASE_DIR}/results/06_bigwig"
 OUTPUT_DIR="${BASE_DIR}/results/06_bigwig"
+
+echo "=========================================="
+echo "WARNING: This script is OPTIONAL/LEGACY"
+echo "=========================================="
+echo "Step 11 already creates average BigWig files from merged BAMs."
+echo "Those files are preferred for Cut&Tag data analysis."
+echo ""
+echo "Step 11 output: results/11_combined_replicates_narrow/bigwig/*_average.bw"
+echo ""
+echo "This script creates averages from individual BigWig files (alternative method)."
+echo "Continuing anyway..."
+echo ""
 
 echo "Starting bigwig combination for TES, TESmut, and TEAD1 groups"
 

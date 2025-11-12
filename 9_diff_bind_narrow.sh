@@ -77,7 +77,49 @@ conda activate diffbind_analysis
 
 BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG"
 
-# Run DiffBind analysis
+echo "=========================================="
+echo "Starting DiffBind analysis"
+echo "Date: $(date)"
+echo "=========================================="
+
+# IMPORTANT: Cut&Tag-specific DiffBind considerations
+# The R script should use the following settings for Cut&Tag data:
+#
+# 1. Use consensus peaks from step 11 (not raw MACS2 peaks)
+#    - Preferably use: *_consensus_peaks_scored.bed
+#    - Alternative: *_idr_union.bed for IDR-based peaks
+#
+# 2. Normalization method:
+#    - Recommended: "lib" (library size) or "RLE" (DESeq2 default)
+#    - Avoid: "background" normalization (Cut&Tag has low background)
+#
+# 3. Fragment length:
+#    - Cut&Tag fragments are ~150bp (nucleosome-free)
+#    - Set fragmentSize=150 in DiffBind
+#
+# 4. Filtering:
+#    - minCount threshold should be adjusted for Cut&Tag's lower read counts
+#    - Consider minCount=10 instead of default 15
+#
+# 5. Summit usage:
+#    - summits=TRUE to use peak summits (Cut&Tag has precise binding)
+#
+# Example DiffBind settings for Cut&Tag:
+# dba <- dba.count(dba, fragmentSize=150, summits=TRUE, minCount=10)
+# dba <- dba.normalize(dba, method=DBA_NORM_LIB)  # or DBA_NORM_RLE
+
+echo "Running DiffBind analysis (ensure R script uses Cut&Tag-optimized settings)..."
 Rscript ${BASE_DIR}/scripts/diffbind_analysis.R
 
-echo "Differential binding analysis complete!"
+if [ $? -eq 0 ]; then
+    echo "Differential binding analysis complete!"
+    echo "Results should be in: ${BASE_DIR}/results/diffbind_analysis/"
+else
+    echo "ERROR: DiffBind analysis failed. Check R script and logs."
+    exit 1
+fi
+
+echo "=========================================="
+echo "DiffBind analysis completed"
+echo "Date: $(date)"
+echo "=========================================="

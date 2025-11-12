@@ -229,22 +229,60 @@ fi
 
 cat >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md << 'EOF'
 
-## Consensus Analysis Results
+## Consensus Analysis Results (Improved Pipeline)
+
+### Key Features of Improved Consensus Analysis:
+- **Summit-based consensus**: Precise TF binding site identification
+- **Quality-weighted peaks**: Signal strength prioritization
+- **IDR reproducibility**: ENCODE-standard statistical framework
+- **Multiple peak sets**: Different stringency levels for various analyses
+
 EOF
 
 # Add consensus results if available
 if [ -f "${BASE_DIR}/results/11_combined_replicates_narrow/REPLICATE_COMBINATION_SUMMARY_NARROW.txt" ]; then
-    echo "### Narrow Peak Consensus" >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
+    echo "### Narrow Peak Consensus (Improved Pipeline)" >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
+    echo '```' >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
     append_file_or_placeholder "${BASE_DIR}/results/11_combined_replicates_narrow/REPLICATE_COMBINATION_SUMMARY_NARROW.txt" \
         "*Narrow consensus analysis not available*" \
         "${BASE_DIR}/results/ANALYSIS_SUMMARY.md"
+    echo '```' >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
+    echo "" >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
+fi
+
+# Add IDR statistics if available
+CONSENSUS_NARROW="${BASE_DIR}/results/11_combined_replicates_narrow"
+if [ -d "${CONSENSUS_NARROW}/idr" ]; then
+    echo "### IDR Reproducibility Metrics (Narrow Peaks)" >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
+    echo "" >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
+
+    for condition in TES TESmut TEAD1; do
+        if [ -f "${CONSENSUS_NARROW}/idr/${condition}_rep1_vs_rep2_idr.txt" ]; then
+            idr_12=$(wc -l < "${CONSENSUS_NARROW}/idr/${condition}_rep1_vs_rep2_idr.txt" 2>/dev/null || echo 0)
+            idr_13=$(wc -l < "${CONSENSUS_NARROW}/idr/${condition}_rep1_vs_rep3_idr.txt" 2>/dev/null || echo 0)
+            idr_23=$(wc -l < "${CONSENSUS_NARROW}/idr/${condition}_rep2_vs_rep3_idr.txt" 2>/dev/null || echo 0)
+            idr_union=$(wc -l < "${CONSENSUS_NARROW}/idr/${condition}_idr_union.bed" 2>/dev/null || echo 0)
+            idr_intersect=$(wc -l < "${CONSENSUS_NARROW}/idr/${condition}_idr_intersection.bed" 2>/dev/null || echo 0)
+
+            echo "**${condition} IDR Results:**" >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
+            echo "- Rep1 vs Rep2: $idr_12 peaks" >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
+            echo "- Rep1 vs Rep3: $idr_13 peaks" >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
+            echo "- Rep2 vs Rep3: $idr_23 peaks" >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
+            echo "- IDR union: $idr_union peaks" >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
+            echo "- IDR intersection (most stringent): $idr_intersect peaks" >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
+            echo "" >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
+        fi
+    done
 fi
 
 if [ -f "${BASE_DIR}/results/11_combined_replicates_broad/REPLICATE_COMBINATION_SUMMARY_BROAD.txt" ]; then
     echo "### Broad Peak Consensus" >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
+    echo '```' >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
     append_file_or_placeholder "${BASE_DIR}/results/11_combined_replicates_broad/REPLICATE_COMBINATION_SUMMARY_BROAD.txt" \
         "*Broad consensus analysis not available*" \
         "${BASE_DIR}/results/ANALYSIS_SUMMARY.md"
+    echo '```' >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
+    echo "" >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md
 fi
 
 cat >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md << 'EOF'
@@ -257,17 +295,39 @@ cat >> ${BASE_DIR}/results/ANALYSIS_SUMMARY.md << 'EOF'
 5. **Epigenetic modifications**: Validate KRAB/DNMT activity at target sites identified by both methods
 
 ## Recommendations
+
+### Peak Set Selection for Downstream Analysis
+
+#### For Motif Analysis:
+- **Primary**: Summit-based consensus peaks (`*_consensus_summits.bed`)
+- **Alternative**: IDR intersection peaks (most stringent)
+
+#### For Functional Studies (RNA-seq correlation, etc.):
+- **Primary**: Quality-scored consensus peaks (`*_consensus_peaks_scored.bed`) ⭐ RECOMMENDED
+- **Alternative**: IDR union peaks (permissive but reproducible)
+
+#### For Publication:
+- **Primary**: IDR-based peaks (intersection for stringent, union for permissive)
+- **Include**: Reproducibility statistics from IDR analysis
+
 ### Analysis Track Selection
 - **Use Narrow Peaks for**: Precise motif analysis, specific binding site identification
 - **Use Broad Peaks for**: Overlap analysis, chromatin domain studies, consensus calling
 - **Use Both Tracks for**: Comprehensive analysis and methodological validation
 
+### Quality Thresholds:
+- **Excellent data**: IDR reproducibility >70%
+- **Good data**: IDR reproducibility 50-70%
+- **Acceptable data**: IDR reproducibility 30-50%
+- **Poor data**: IDR reproducibility <30% (consider repeating)
+
 ### Next Steps
-1. Validate key targets by ChIP-qPCR using both narrow and broad peak target lists
-2. RNA-seq to measure transcriptional repression at consensus targets
-3. Bisulfite sequencing for DNA methylation analysis at high-confidence sites
-4. ATAC-seq to assess chromatin accessibility changes in broad peak regions
-5. Compare functional validation results between narrow vs broad peak target sets
+1. Validate key targets by ChIP-qPCR using IDR intersection peaks (highest confidence)
+2. RNA-seq to measure transcriptional repression at quality-scored consensus targets
+3. Bisulfite sequencing for DNA methylation analysis at high-confidence IDR sites
+4. ATAC-seq to assess chromatin accessibility changes using consensus peaks
+5. Motif analysis using summit-based consensus peaks
+6. Compare results between different peak stringency levels
 
 ## Output Files Directory Structure
 

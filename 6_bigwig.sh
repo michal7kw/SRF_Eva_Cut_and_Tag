@@ -89,8 +89,13 @@ echo "Analyzing fragment size for ${SAMPLE}..."
 FRAGMENT_SIZE=$(samtools view -f 2 ${BAM_DIR}/${SAMPLE}_filtered.bam | head -10000 | awk '$9 > 0 {sum+=$9; count++} END {print int(sum/count)}')
 echo "Estimated fragment size: ${FRAGMENT_SIZE}bp"
 
-# Use appropriate parameters for Cut&Tag
-# For Cut&Tag, we typically don't extend reads as they represent actual fragment ends
+# Cut&Tag-optimized BigWig generation
+# Key differences from ChIP-seq:
+# - NO --centerReads (Cut&Tag fragments represent actual binding, not extended reads)
+# - NO --smoothLength (Cut&Tag has precise signal, don't over-smooth)
+# - Use --extendReads for better signal representation
+# - Keep binSize at 10bp for high resolution
+
 echo "Generating normalized BigWig files (CPM normalization)..."
 bamCoverage \
     -b ${BAM_DIR}/${SAMPLE}_filtered.bam \
@@ -98,10 +103,9 @@ bamCoverage \
     --normalizeUsing CPM \
     --binSize 10 \
     --numberOfProcessors 8 \
-    --centerReads \
-    --smoothLength 30
+    --extendReads
 
-# Also create RPGC normalized version if genome size is available
+# Also create RPGC normalized version (recommended for Cut&Tag cross-sample comparison)
 echo "Generating RPGC normalized BigWig..."
 bamCoverage \
     -b ${BAM_DIR}/${SAMPLE}_filtered.bam \
@@ -110,7 +114,6 @@ bamCoverage \
     --effectiveGenomeSize 2913022398 \
     --binSize 10 \
     --numberOfProcessors 8 \
-    --centerReads \
-    --smoothLength 30
+    --extendReads
 
 echo "BigWig generation complete for ${SAMPLE}"

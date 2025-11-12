@@ -290,11 +290,44 @@ done
 echo "" >> ${BASE_DIR}/results/multiqc/custom_stats.txt
 echo "[ ] Peak counts (MACS2)" >> ${BASE_DIR}/results/multiqc/custom_stats.txt
 for condition in TES TESmut TEAD1; do
-    if [ -f "${BASE_DIR}/results/05_peaks/${condition}_peaks.narrowPeak" ]; then
-        count=$(wc -l < ${BASE_DIR}/results/05_peaks/${condition}_peaks.narrowPeak)
+    if [ -f "${BASE_DIR}/results/05_peaks_narrow/${condition}_peaks.narrowPeak" ]; then
+        count=$(wc -l < ${BASE_DIR}/results/05_peaks_narrow/${condition}_peaks.narrowPeak)
         echo "    ${condition}: ${count} peaks" >> ${BASE_DIR}/results/multiqc/custom_stats.txt
     fi
 done
+
+# Add consensus peak statistics if available
+if [ -d "${BASE_DIR}/results/11_combined_replicates_narrow" ]; then
+    echo "" >> ${BASE_DIR}/results/multiqc/custom_stats.txt
+    echo "[ ] Consensus Peak Statistics (Improved Pipeline)" >> ${BASE_DIR}/results/multiqc/custom_stats.txt
+
+    for condition in TES TESmut TEAD1; do
+        consensus_scored="${BASE_DIR}/results/11_combined_replicates_narrow/peaks/${condition}_consensus_peaks_scored.bed"
+        idr_union="${BASE_DIR}/results/11_combined_replicates_narrow/idr/${condition}_idr_union.bed"
+
+        if [ -f "$consensus_scored" ]; then
+            count=$(wc -l < "$consensus_scored")
+            echo "    ${condition} consensus (quality-scored): ${count} peaks" >> ${BASE_DIR}/results/multiqc/custom_stats.txt
+        fi
+
+        if [ -f "$idr_union" ]; then
+            idr_count=$(wc -l < "$idr_union")
+            echo "    ${condition} IDR union (reproducible): ${idr_count} peaks" >> ${BASE_DIR}/results/multiqc/custom_stats.txt
+        fi
+    done
+
+    # Add IDR reproducibility statistics
+    echo "" >> ${BASE_DIR}/results/multiqc/custom_stats.txt
+    echo "[ ] IDR Reproducibility Statistics" >> ${BASE_DIR}/results/multiqc/custom_stats.txt
+
+    for condition in TES TESmut TEAD1; do
+        idr_summary="${BASE_DIR}/results/11_combined_replicates_narrow/REPLICATE_COMBINATION_SUMMARY_NARROW.txt"
+        if [ -f "$idr_summary" ]; then
+            echo "    ${condition}:" >> ${BASE_DIR}/results/multiqc/custom_stats.txt
+            grep -A 3 "=== $condition Condition ===" "$idr_summary" | tail -n 2 >> ${BASE_DIR}/results/multiqc/custom_stats.txt 2>/dev/null
+        fi
+    done
+fi
 
 # Add overlap statistics if available
 if [ -f "${BASE_DIR}/results/07_analysis/peak_stats.txt" ]; then

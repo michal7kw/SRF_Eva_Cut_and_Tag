@@ -77,24 +77,50 @@ conda activate overlap
 OUTDIR="results/12_pairwise_overlap_narrow"
 mkdir -p "$OUTDIR"/{overlaps,unique,venn,matrices,plots,stats}
 
-# Define peak directory and files
+# Define peak directories
 PEAK_DIR="results/05_peaks_narrow"
+CONSENSUS_DIR="results/11_combined_replicates_narrow"
 ANALYSIS_TYPE="narrow"
 
-# Check if narrow peaks directory exists
-if [ ! -d "$PEAK_DIR" ]; then
-    echo "Error: Narrow peaks directory not found: $PEAK_DIR"
-    echo "Please run step 5 (narrow peak calling) first."
-    exit 1
-fi
+# Function to select best available peak file
+select_best_peak_file() {
+    local condition=$1
+    local consensus_scored="${CONSENSUS_DIR}/peaks/${condition}_consensus_peaks_scored.bed"
+    local consensus_full="${CONSENSUS_DIR}/peaks/${condition}_consensus_peaks.bed"
+    local idr_union="${CONSENSUS_DIR}/idr/${condition}_idr_union.bed"
+    local macs2_combined="${PEAK_DIR}/${condition}_peaks.narrowPeak"
 
-# Define conditions and peak files
+    if [ -f "$consensus_scored" ]; then
+        echo "$consensus_scored"
+        echo "  Using quality-scored consensus peaks for $condition" >&2
+    elif [ -f "$consensus_full" ]; then
+        echo "$consensus_full"
+        echo "  Using full consensus peaks for $condition" >&2
+    elif [ -f "$idr_union" ]; then
+        echo "$idr_union"
+        echo "  Using IDR union peaks for $condition" >&2
+    elif [ -f "$macs2_combined" ]; then
+        echo "$macs2_combined"
+        echo "  Using MACS2 combined peaks for $condition (consensus not available)" >&2
+    else
+        echo ""
+        echo "  ERROR: No peak file found for $condition" >&2
+    fi
+}
+
+# Define conditions and select peak files
+echo "=== Selecting optimal peak sets for pairwise comparison ==="
 CONDITIONS=("TES" "TESmut" "TEAD1")
-declare -A PEAK_FILES=(
-    ["TES"]="${PEAK_DIR}/TES_peaks.narrowPeak"
-    ["TESmut"]="${PEAK_DIR}/TESmut_peaks.narrowPeak"
-    ["TEAD1"]="${PEAK_DIR}/TEAD1_peaks.narrowPeak"
-)
+declare -A PEAK_FILES
+
+for condition in "${CONDITIONS[@]}"; do
+    selected_file=$(select_best_peak_file "$condition")
+    if [ -z "$selected_file" ]; then
+        echo "Error: No peak file found for $condition"
+        exit 1
+    fi
+    PEAK_FILES[$condition]="$selected_file"
+done
 
 # Check if peak files exist
 echo "=== Checking narrow peak files ==="
@@ -325,15 +351,26 @@ echo "=== Creating comprehensive summary ==="
 SUMMARY_FILE="$OUTDIR/PAIRWISE_OVERLAP_SUMMARY.md"
 
 cat > "$SUMMARY_FILE" << EOF
-# Pairwise Binding Site Overlap Analysis Summary (Narrow Peaks)
+# Pairwise Binding Site Overlap Analysis Summary (Narrow Peaks - Improved)
 
 **Generated on:** $(date)
-**Peak Type Used:** Narrow peaks
-**Peak Files Source:** ${PEAK_DIR}
+**Peak Type Used:** High-quality narrow peaks (consensus/IDR when available)
+**Peak Files Used:**
+EOF
+
+# Add actual peak files used
+for condition in "${CONDITIONS[@]}"; do
+    echo "- **$condition**: ${PEAK_FILES[$condition]}" >> "$SUMMARY_FILE"
+done
+
+cat >> "$SUMMARY_FILE" << EOF
 
 ## Overview
 
-This analysis compares binding sites between TES, TESmut, and TEAD1 conditions using pairwise overlap analysis with narrow peaks from MACS2. Narrow peaks provide precise binding site localization but may have lower overlap sensitivity compared to broad peaks.
+This analysis compares binding sites between TES, TESmut, and TEAD1 conditions using pairwise overlap analysis.
+The analysis prioritizes high-quality consensus peaks (from step 11) when available, falling back to MACS2
+combined peaks if consensus analysis hasn't been run. This approach provides more reproducible and
+statistically robust overlap estimates.
 
 ## Peak Counts by Condition
 

@@ -19,13 +19,15 @@
 # 5. Cross-condition signal analysis and visualization
 # 6. Summary statistics generation
 #
-# METHODOLOGY:
+# METHODOLOGY (Improved for Cut&Tag):
 # - Uses samtools for BAM merging and indexing
 # - Employs bamCoverage for normalized average signal tracks
-# - Applies bedtools for peak merging and consensus calling
+# - Applies bedtools multiinter for precise overlap detection
+# - Implements IDR (Irreproducible Discovery Rate) for replicate reproducibility
+# - Uses summit-based peak consensus for accurate binding sites
 # - Utilizes deepTools for signal matrix computation
 # - Creates heatmaps and profile plots for visualization
-# - Implements stringent consensus criteria (≥2/3 replicates)
+# - Implements stringent consensus criteria with quality weighting
 #
 # IMPORTANT PARAMETERS:
 # - Memory: 16GB (for large BAM file operations)
@@ -53,6 +55,7 @@
 # - samtools for BAM manipulation
 # - bamCoverage (deepTools) for signal tracks
 # - bedtools for genomic interval operations
+# - idr package for replicate reproducibility analysis
 # - computeMatrix, plotHeatmap (deepTools) for visualization
 # - Conda environment: combine_results
 #
@@ -83,7 +86,6 @@ conda activate combine_results
 
 # Set up directories
 OUTDIR="results/11_combined_replicates_narrow"
-mkdir -p "$OUTDIR"/{bigwig,peaks,matrices}
 
 # Check required files
 REQUIRED_DIRS=("results/04_filtered" "results/05_peaks_narrow" "results/06_bigwig")
@@ -152,62 +154,228 @@ for condition in "${!CONDITIONS[@]}"; do
     fi
 done
 
-echo "=== Creating consensus peak sets ==="
+echo "=== Creating consensus peak sets with improved methodology ==="
 
-# Use existing combined peaks but also create high-confidence consensus
+# Improved consensus peak calling for Cut&Tag data
 for condition in "${!CONDITIONS[@]}"; do
     echo "Processing consensus peaks for $condition..."
-    
+
     # Get individual replicate peak files
     replicates=(${CONDITIONS[$condition]})
-    peak_files=""
-    existing_peaks=0
-    
+    peak_files=()
+    replicate_names=()
+
     for replicate in "${replicates[@]}"; do
         peak_file="results/05_peaks_narrow/${replicate}_peaks.narrowPeak"
         if [ -f "$peak_file" ]; then
-            peak_files="$peak_files $peak_file"
-            existing_peaks=$((existing_peaks + 1))
-            echo "  Found: $peak_file"
+            peak_files+=("$peak_file")
+            replicate_names+=("$replicate")
+            echo "  Found: $peak_file ($(wc -l < $peak_file) peaks)"
         fi
     done
-    
-    if [ $existing_peaks -ge 2 ]; then
+
+    if [ ${#peak_files[@]} -ge 2 ]; then
         echo "  Creating high-confidence consensus peaks for $condition..."
-        
-        # Merge all individual peaks and find overlaps
-        cat $peak_files | sort -k1,1 -k2,2n > "$OUTDIR/peaks/${condition}_all_peaks.bed"
-        
-        # Use bedtools to find peaks present in at least 2 out of 3 replicates
-        bedtools merge -i "$OUTDIR/peaks/${condition}_all_peaks.bed" -c 4 -o count > "$OUTDIR/peaks/${condition}_merged_raw.bed"
-        
-        # Filter for high-confidence peaks (present in >= 2 replicates)
-        awk '$4 >= 2' "$OUTDIR/peaks/${condition}_merged_raw.bed" > "$OUTDIR/peaks/${condition}_consensus_peaks.bed"
-        
-        # Copy existing combined peak file as well
+
+        # Method 1: Summit-based consensus (most accurate for TF binding)
+        # Extract summits from each replicate and expand to ±250bp windows
+        for i in "${!peak_files[@]}"; do
+            # Column 10 in narrowPeak is summit offset from peak start
+            awk -v OFS='\t' '{summit=$2+$10; print $1, summit, summit+1, $4, $5, $6, $7, $8, $9}' "${peak_files[$i]}" | \
+            bedtools slop -i - -g /beegfs/scratch/ric.sessa/kubacki.michal/COMMONS/genome/hg38.chrom.sizes -b 250 > \
+            "$OUTDIR/peaks/${replicate_names[$i]}_summits_expanded.bed"
+        done
+
+        # Use multiinter for precise overlap tracking
+        bedtools multiinter \
+            -i "$OUTDIR/peaks/"*"_summits_expanded.bed" \
+            -names ${replicate_names[@]} \
+            > "$OUTDIR/peaks/${condition}_multiinter.bed"
+
+        # High-confidence consensus: present in ≥2 replicates AND ≥50bp overlap
+        awk '$4 >= 2 && ($3-$2) >= 50' "$OUTDIR/peaks/${condition}_multiinter.bed" | \
+        bedtools merge -i - > "$OUTDIR/peaks/${condition}_consensus_summits.bed"
+
+        # Method 2: Full peak overlap with reciprocal requirement
+        # Filter individual peaks first (q-value < 0.05, fold enrichment ≥ 2)
+        for i in "${!peak_files[@]}"; do
+            awk '$9 >= 1.301 && $7 >= 2' "${peak_files[$i]}" > \
+            "$OUTDIR/peaks/${replicate_names[$i]}_filtered.narrowPeak"
+        done
+
+        # Use multiinter on filtered full peaks
+        bedtools multiinter \
+            -i "$OUTDIR/peaks/"*"_filtered.narrowPeak" \
+            > "$OUTDIR/peaks/${condition}_multiinter_full.bed"
+
+        # Require ≥2 replicates with minimum overlap
+        awk '$4 >= 2 && ($3-$2) >= 50' "$OUTDIR/peaks/${condition}_multiinter_full.bed" | \
+        bedtools merge -i - -c 4,5 -o max,collapse > "$OUTDIR/peaks/${condition}_consensus_peaks.bed"
+
+        # Method 3: Peak quality-weighted consensus
+        # Create scored peaks by averaging signal across overlapping peaks
+        for i in "${!peak_files[@]}"; do
+            # Extract chr, start, end, score (column 7 = fold enrichment)
+            awk -v OFS='\t' '{print $1, $2, $3, $7}' "$OUTDIR/peaks/${replicate_names[$i]}_filtered.narrowPeak" > \
+            "$OUTDIR/peaks/${replicate_names[$i]}_scored.bed"
+        done
+
+        # Map scores to consensus regions
+        bedtools map -a "$OUTDIR/peaks/${condition}_consensus_peaks.bed" \
+            -b "$OUTDIR/peaks/${replicate_names[0]}_scored.bed" \
+            -c 4 -o mean > "$OUTDIR/peaks/${condition}_consensus_scored.tmp"
+
+        for i in {1..2}; do
+            if [ $i -lt ${#replicate_names[@]} ]; then
+                bedtools map -a "$OUTDIR/peaks/${condition}_consensus_scored.tmp" \
+                    -b "$OUTDIR/peaks/${replicate_names[$i]}_scored.bed" \
+                    -c 4 -o mean > "$OUTDIR/peaks/${condition}_consensus_scored.tmp2"
+                mv "$OUTDIR/peaks/${condition}_consensus_scored.tmp2" "$OUTDIR/peaks/${condition}_consensus_scored.tmp"
+            fi
+        done
+
+        # Create final consensus with average scores
+        awk -v OFS='\t' '{
+            score=0; count=0;
+            for(i=4; i<=NF; i++) {
+                if($i != ".") {score+=$i; count++}
+            }
+            avg_score = (count > 0) ? score/count : 0;
+            print $1, $2, $3, "peak_"NR, avg_score
+        }' "$OUTDIR/peaks/${condition}_consensus_scored.tmp" > "$OUTDIR/peaks/${condition}_consensus_peaks_scored.bed"
+
+        rm "$OUTDIR/peaks/${condition}_consensus_scored.tmp"
+
+        # Copy existing combined peak file for comparison
         if [ -f "results/05_peaks_narrow/${condition}_peaks.narrowPeak" ]; then
             cp "results/05_peaks_narrow/${condition}_peaks.narrowPeak" "$OUTDIR/peaks/${condition}_combined_peaks.narrowPeak"
         fi
-        
-        consensus_count=$(wc -l < "$OUTDIR/peaks/${condition}_consensus_peaks.bed")
-        echo "  $condition consensus peaks (≥2 replicates): $consensus_count"
-        
+
+        # Report statistics
+        summit_consensus=$(wc -l < "$OUTDIR/peaks/${condition}_consensus_summits.bed")
+        full_consensus=$(wc -l < "$OUTDIR/peaks/${condition}_consensus_peaks.bed")
+        scored_consensus=$(wc -l < "$OUTDIR/peaks/${condition}_consensus_peaks_scored.bed")
+
+        echo "  $condition consensus peaks (summit-based): $summit_consensus"
+        echo "  $condition consensus peaks (full overlap): $full_consensus"
+        echo "  $condition consensus peaks (quality-scored): $scored_consensus"
+
     else
-        echo "  Warning: Insufficient peak files for $condition consensus"
+        echo "  Warning: Insufficient peak files for $condition consensus (need ≥2, found ${#peak_files[@]})"
+    fi
+done
+
+echo "=== Running IDR analysis for replicate reproducibility ==="
+
+# IDR (Irreproducible Discovery Rate) analysis for pairwise replicate comparisons
+# This is the ENCODE standard for assessing replicate quality
+mkdir -p "$OUTDIR/idr"
+
+for condition in "${!CONDITIONS[@]}"; do
+    echo "Running IDR analysis for $condition..."
+
+    # Get replicate peak files
+    replicates=(${CONDITIONS[$condition]})
+    peak_files=()
+
+    for replicate in "${replicates[@]}"; do
+        peak_file="results/05_peaks_narrow/${replicate}_peaks.narrowPeak"
+        if [ -f "$peak_file" ]; then
+            peak_files+=("$peak_file")
+        fi
+    done
+
+    # Run pairwise IDR on all replicate combinations
+    if [ ${#peak_files[@]} -eq 3 ]; then
+        echo "  Running pairwise IDR comparisons for $condition..."
+
+        # Rep1 vs Rep2
+        idr --samples "${peak_files[0]}" "${peak_files[1]}" \
+            --input-file-type narrowPeak \
+            --rank p.value \
+            --output-file "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.txt" \
+            --plot \
+            --idr-threshold 0.05 \
+            --output-file-type narrowPeak \
+            2> "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.log"
+
+        # Rep1 vs Rep3
+        idr --samples "${peak_files[0]}" "${peak_files[2]}" \
+            --input-file-type narrowPeak \
+            --rank p.value \
+            --output-file "$OUTDIR/idr/${condition}_rep1_vs_rep3_idr.txt" \
+            --plot \
+            --idr-threshold 0.05 \
+            --output-file-type narrowPeak \
+            2> "$OUTDIR/idr/${condition}_rep1_vs_rep3_idr.log"
+
+        # Rep2 vs Rep3
+        idr --samples "${peak_files[1]}" "${peak_files[2]}" \
+            --input-file-type narrowPeak \
+            --rank p.value \
+            --output-file "$OUTDIR/idr/${condition}_rep2_vs_rep3_idr.txt" \
+            --plot \
+            --idr-threshold 0.05 \
+            --output-file-type narrowPeak \
+            2> "$OUTDIR/idr/${condition}_rep2_vs_rep3_idr.log"
+
+        # Create union of high-confidence IDR peaks
+        cat "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.txt" \
+            "$OUTDIR/idr/${condition}_rep1_vs_rep3_idr.txt" \
+            "$OUTDIR/idr/${condition}_rep2_vs_rep3_idr.txt" | \
+        sort -k1,1 -k2,2n | \
+        bedtools merge -i - > "$OUTDIR/idr/${condition}_idr_union.bed"
+
+        # Create intersection of high-confidence IDR peaks (most stringent)
+        bedtools intersect -a "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.txt" \
+            -b "$OUTDIR/idr/${condition}_rep1_vs_rep3_idr.txt" -u | \
+        bedtools intersect -a - -b "$OUTDIR/idr/${condition}_rep2_vs_rep3_idr.txt" -u > \
+            "$OUTDIR/idr/${condition}_idr_intersection.bed"
+
+        # Count IDR peaks
+        idr_12=$(wc -l < "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.txt" 2>/dev/null || echo 0)
+        idr_13=$(wc -l < "$OUTDIR/idr/${condition}_rep1_vs_rep3_idr.txt" 2>/dev/null || echo 0)
+        idr_23=$(wc -l < "$OUTDIR/idr/${condition}_rep2_vs_rep3_idr.txt" 2>/dev/null || echo 0)
+        idr_union=$(wc -l < "$OUTDIR/idr/${condition}_idr_union.bed" 2>/dev/null || echo 0)
+        idr_intersect=$(wc -l < "$OUTDIR/idr/${condition}_idr_intersection.bed" 2>/dev/null || echo 0)
+
+        echo "  $condition IDR results:"
+        echo "    Rep1 vs Rep2 (IDR<0.05): $idr_12 peaks"
+        echo "    Rep1 vs Rep3 (IDR<0.05): $idr_13 peaks"
+        echo "    Rep2 vs Rep3 (IDR<0.05): $idr_23 peaks"
+        echo "    Union of all IDR peaks: $idr_union peaks"
+        echo "    Intersection (most stringent): $idr_intersect peaks"
+
+    elif [ ${#peak_files[@]} -eq 2 ]; then
+        echo "  Running IDR for 2 replicates of $condition..."
+        idr --samples "${peak_files[0]}" "${peak_files[1]}" \
+            --input-file-type narrowPeak \
+            --rank p.value \
+            --output-file "$OUTDIR/idr/${condition}_idr.txt" \
+            --plot \
+            --idr-threshold 0.05 \
+            --output-file-type narrowPeak \
+            2> "$OUTDIR/idr/${condition}_idr.log"
+
+        idr_count=$(wc -l < "$OUTDIR/idr/${condition}_idr.txt" 2>/dev/null || echo 0)
+        echo "  $condition IDR peaks (IDR<0.05): $idr_count"
+    else
+        echo "  Warning: Need at least 2 replicates for IDR analysis"
     fi
 done
 
 echo "=== Creating signal matrices around consensus peaks ==="
 
 # Create signal matrices for each condition using their own consensus peaks
+# Use the quality-scored consensus peaks for best results
 for condition in "${!CONDITIONS[@]}"; do
-    if [ -f "$OUTDIR/peaks/${condition}_consensus_peaks.bed" ] && [ -f "$OUTDIR/bigwig/${condition}_average.bw" ]; then
+    if [ -f "$OUTDIR/peaks/${condition}_consensus_peaks_scored.bed" ] && [ -f "$OUTDIR/bigwig/${condition}_average.bw" ]; then
         echo "Computing signal matrix for $condition around its consensus peaks..."
-        
+
         computeMatrix reference-point \
             --referencePoint center \
             -b 3000 -a 3000 \
-            -R "$OUTDIR/peaks/${condition}_consensus_peaks.bed" \
+            -R "$OUTDIR/peaks/${condition}_consensus_peaks_scored.bed" \
             -S "$OUTDIR/bigwig/${condition}_average.bw" \
             --skipZeros \
             -o "$OUTDIR/matrices/${condition}_self_matrix.gz" \
@@ -268,38 +436,133 @@ for peak_condition in "${conditions[@]}"; do
     fi
 done
 
-echo "=== Generating summary statistics ==="
+echo "=== Generating comprehensive summary statistics ==="
 
 # Create summary file
 SUMMARY_FILE="$OUTDIR/REPLICATE_COMBINATION_SUMMARY_NARROW.txt"
-echo "Cut&Tag Replicate Combination Analysis Summary (NARROW PEAKS)" > "$SUMMARY_FILE"
+echo "Cut&Tag Replicate Combination Analysis Summary (NARROW PEAKS - IMPROVED)" > "$SUMMARY_FILE"
 echo "Generated on: $(date)" >> "$SUMMARY_FILE"
-echo "=============================================" >> "$SUMMARY_FILE"
+echo "=========================================================================" >> "$SUMMARY_FILE"
 echo "" >> "$SUMMARY_FILE"
 
 for condition in "${!CONDITIONS[@]}"; do
     echo "=== $condition Condition ===" >> "$SUMMARY_FILE"
-    
+
     # Read counts from merged BAM
     if [ -f "$OUTDIR/${condition}_merged.bam" ]; then
         reads=$(samtools view -c "$OUTDIR/${condition}_merged.bam")
         echo "Total reads in merged BAM: $reads" >> "$SUMMARY_FILE"
     fi
-    
-    # Consensus peak counts
+
+    echo "" >> "$SUMMARY_FILE"
+    echo "Peak Calling Results:" >> "$SUMMARY_FILE"
+    echo "---------------------" >> "$SUMMARY_FILE"
+
+    # Individual replicate peak counts
+    replicates=(${CONDITIONS[$condition]})
+    for replicate in "${replicates[@]}"; do
+        peak_file="results/05_peaks_narrow/${replicate}_peaks.narrowPeak"
+        if [ -f "$peak_file" ]; then
+            count=$(wc -l < "$peak_file")
+            echo "  $replicate: $count peaks" >> "$SUMMARY_FILE"
+        fi
+    done
+
+    echo "" >> "$SUMMARY_FILE"
+    echo "Consensus Peak Sets:" >> "$SUMMARY_FILE"
+    echo "--------------------" >> "$SUMMARY_FILE"
+
+    # Summit-based consensus
+    if [ -f "$OUTDIR/peaks/${condition}_consensus_summits.bed" ]; then
+        summit_peaks=$(wc -l < "$OUTDIR/peaks/${condition}_consensus_summits.bed")
+        echo "  Summit-based consensus (±250bp): $summit_peaks peaks" >> "$SUMMARY_FILE"
+    fi
+
+    # Full peak consensus
     if [ -f "$OUTDIR/peaks/${condition}_consensus_peaks.bed" ]; then
         consensus_peaks=$(wc -l < "$OUTDIR/peaks/${condition}_consensus_peaks.bed")
-        echo "Consensus peaks (≥2 replicates): $consensus_peaks" >> "$SUMMARY_FILE"
+        echo "  Full overlap consensus (≥2 reps, ≥50bp): $consensus_peaks peaks" >> "$SUMMARY_FILE"
     fi
-    
-    # Combined peaks (original)
+
+    # Quality-scored consensus
+    if [ -f "$OUTDIR/peaks/${condition}_consensus_peaks_scored.bed" ]; then
+        scored_peaks=$(wc -l < "$OUTDIR/peaks/${condition}_consensus_peaks_scored.bed")
+        avg_score=$(awk '{sum+=$5; count++} END {print sum/count}' "$OUTDIR/peaks/${condition}_consensus_peaks_scored.bed")
+        echo "  Quality-scored consensus: $scored_peaks peaks (avg score: $avg_score)" >> "$SUMMARY_FILE"
+    fi
+
+    # Combined peaks (original method for comparison)
     if [ -f "$OUTDIR/peaks/${condition}_combined_peaks.narrowPeak" ]; then
         combined_peaks=$(wc -l < "$OUTDIR/peaks/${condition}_combined_peaks.narrowPeak")
-        echo "Combined peaks (original): $combined_peaks" >> "$SUMMARY_FILE"
+        echo "  Combined peaks (original MACS2): $combined_peaks peaks" >> "$SUMMARY_FILE"
     fi
-    
+
+    echo "" >> "$SUMMARY_FILE"
+    echo "IDR Reproducibility Analysis:" >> "$SUMMARY_FILE"
+    echo "------------------------------" >> "$SUMMARY_FILE"
+
+    # IDR results
+    if [ -f "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.txt" ]; then
+        idr_12=$(wc -l < "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.txt" 2>/dev/null || echo 0)
+        idr_13=$(wc -l < "$OUTDIR/idr/${condition}_rep1_vs_rep3_idr.txt" 2>/dev/null || echo 0)
+        idr_23=$(wc -l < "$OUTDIR/idr/${condition}_rep2_vs_rep3_idr.txt" 2>/dev/null || echo 0)
+
+        echo "  Rep1 vs Rep2 (IDR<0.05): $idr_12 peaks" >> "$SUMMARY_FILE"
+        echo "  Rep1 vs Rep3 (IDR<0.05): $idr_13 peaks" >> "$SUMMARY_FILE"
+        echo "  Rep2 vs Rep3 (IDR<0.05): $idr_23 peaks" >> "$SUMMARY_FILE"
+
+        # Average reproducibility
+        avg_idr=$(echo "scale=0; ($idr_12 + $idr_13 + $idr_23) / 3" | bc)
+        echo "  Average pairwise IDR peaks: $avg_idr" >> "$SUMMARY_FILE"
+
+        if [ -f "$OUTDIR/idr/${condition}_idr_union.bed" ]; then
+            union=$(wc -l < "$OUTDIR/idr/${condition}_idr_union.bed")
+            echo "  Union of all IDR peaks: $union peaks" >> "$SUMMARY_FILE"
+        fi
+
+        if [ -f "$OUTDIR/idr/${condition}_idr_intersection.bed" ]; then
+            intersect=$(wc -l < "$OUTDIR/idr/${condition}_idr_intersection.bed")
+            echo "  Intersection (most stringent): $intersect peaks" >> "$SUMMARY_FILE"
+        fi
+    elif [ -f "$OUTDIR/idr/${condition}_idr.txt" ]; then
+        idr_count=$(wc -l < "$OUTDIR/idr/${condition}_idr.txt")
+        echo "  IDR peaks (2 replicates, IDR<0.05): $idr_count" >> "$SUMMARY_FILE"
+    else
+        echo "  IDR analysis not performed (insufficient replicates)" >> "$SUMMARY_FILE"
+    fi
+
+    echo "" >> "$SUMMARY_FILE"
+    echo "Quality Metrics:" >> "$SUMMARY_FILE"
+    echo "----------------" >> "$SUMMARY_FILE"
+
+    # Calculate reproducibility rate (IDR peaks / average individual peaks)
+    if [ -f "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.txt" ]; then
+        rep1_peaks=$(wc -l < "results/05_peaks_narrow/${replicates[0]}_peaks.narrowPeak" 2>/dev/null || echo 0)
+        rep2_peaks=$(wc -l < "results/05_peaks_narrow/${replicates[1]}_peaks.narrowPeak" 2>/dev/null || echo 0)
+        rep3_peaks=$(wc -l < "results/05_peaks_narrow/${replicates[2]}_peaks.narrowPeak" 2>/dev/null || echo 0)
+
+        if [ $rep1_peaks -gt 0 ] && [ $rep2_peaks -gt 0 ]; then
+            avg_peaks=$(echo "scale=0; ($rep1_peaks + $rep2_peaks + $rep3_peaks) / 3" | bc)
+            repro_rate=$(echo "scale=2; ($avg_idr / $avg_peaks) * 100" | bc)
+            echo "  Reproducibility rate: ${repro_rate}% (avg IDR / avg individual)" >> "$SUMMARY_FILE"
+        fi
+    fi
+
     echo "" >> "$SUMMARY_FILE"
 done
+
+echo "" >> "$SUMMARY_FILE"
+echo "Recommended Peak Sets for Downstream Analysis:" >> "$SUMMARY_FILE"
+echo "-----------------------------------------------" >> "$SUMMARY_FILE"
+echo "1. MOST STRINGENT: IDR intersection peaks (highest confidence)" >> "$SUMMARY_FILE"
+echo "   Files: idr/*_idr_intersection.bed" >> "$SUMMARY_FILE"
+echo "" >> "$SUMMARY_FILE"
+echo "2. RECOMMENDED: Quality-scored consensus peaks (balanced stringency)" >> "$SUMMARY_FILE"
+echo "   Files: peaks/*_consensus_peaks_scored.bed" >> "$SUMMARY_FILE"
+echo "" >> "$SUMMARY_FILE"
+echo "3. PERMISSIVE: IDR union or summit-based consensus (maximum coverage)" >> "$SUMMARY_FILE"
+echo "   Files: idr/*_idr_union.bed or peaks/*_consensus_summits.bed" >> "$SUMMARY_FILE"
+echo "" >> "$SUMMARY_FILE"
 
 echo "Files created:"
 echo "- Average BigWig tracks: $OUTDIR/bigwig/"

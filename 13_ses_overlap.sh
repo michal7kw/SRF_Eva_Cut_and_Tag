@@ -83,13 +83,20 @@ cd $BASE_DIR
 SES_CONSENSUS="${BASE_DIR}/DATA/SES_consensus.broadPeak"
 NARROW_PEAKS_DIR="${BASE_DIR}/results/05_peaks_narrow"
 BROAD_PEAKS_DIR="${BASE_DIR}/results/05_peaks_broad"
+CONSENSUS_NARROW_DIR="${BASE_DIR}/results/11_combined_replicates_narrow"
 OUTPUT_DIR="${BASE_DIR}/results/13_ses_overlap"
 
 # Create output directory
 mkdir -p ${OUTPUT_DIR}
 
-echo "Starting SES consensus overlap analysis (with chromosome name fixing)..."
+echo "=========================================="
+echo "SES Consensus Overlap Analysis (Improved)"
+echo "=========================================="
+echo "This script will use high-quality consensus peaks when available"
+echo "Priority: Consensus > IDR > MACS2 combined peaks"
+echo ""
 echo "SES consensus peaks: $(wc -l < ${SES_CONSENSUS})"
+echo ""
 
 # Function to convert chromosome names and perform overlap analysis
 perform_overlap() {
@@ -156,12 +163,47 @@ EOF
     rm ${temp_peak_file}
 }
 
-# Process narrow peaks (individual samples)
+# Function to select best narrow peak file
+select_narrow_peak() {
+    local condition=$1
+    local consensus_scored="${CONSENSUS_NARROW_DIR}/peaks/${condition}_consensus_peaks_scored.bed"
+    local consensus_full="${CONSENSUS_NARROW_DIR}/peaks/${condition}_consensus_peaks.bed"
+    local idr_union="${CONSENSUS_NARROW_DIR}/idr/${condition}_idr_union.bed"
+    local macs2_file="${NARROW_PEAKS_DIR}/${condition}_peaks.narrowPeak"
+
+    if [ -f "$consensus_scored" ]; then
+        echo "$consensus_scored"
+    elif [ -f "$consensus_full" ]; then
+        echo "$consensus_full"
+    elif [ -f "$idr_union" ]; then
+        echo "$idr_union"
+    elif [ -f "$macs2_file" ]; then
+        echo "$macs2_file"
+    else
+        echo ""
+    fi
+}
+
+# Process narrow peaks (use consensus when available)
 echo ""
-echo "=== Analyzing Narrow Peaks ==="
-for peak_file in ${NARROW_PEAKS_DIR}/*_peaks.narrowPeak; do
+echo "=== Analyzing Narrow Peaks (Consensus/IDR Preferred) ==="
+
+# Check for consensus peaks for combined conditions
+for condition in TES TESmut TEAD1; do
+    selected_file=$(select_narrow_peak "$condition")
+    if [ -n "$selected_file" ]; then
+        echo "Selected for $condition: $(basename $selected_file)"
+        perform_overlap "$selected_file" "narrow"
+    fi
+done
+
+# Also process individual replicate peaks if they exist (for comparison)
+echo ""
+echo "=== Analyzing Individual Replicate Narrow Peaks (if available) ==="
+for peak_file in ${NARROW_PEAKS_DIR}/*-[123]_peaks.narrowPeak; do
     if [ -f "$peak_file" ]; then
-        perform_overlap "$peak_file" "narrow"
+        echo "Processing individual replicate: $(basename $peak_file)"
+        perform_overlap "$peak_file" "narrow_replicate"
     fi
 done
 

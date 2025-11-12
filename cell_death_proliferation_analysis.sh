@@ -41,9 +41,13 @@ echo "Cell Death & Proliferation Analysis"
 echo "Focus: TES/TEAD1 in Glioblastoma"
 echo "Date: $(date)"
 echo "=========================================="
+echo ""
+echo "NOTE: This analysis uses annotated peaks from step 8."
+echo "Step 8 now automatically uses high-quality consensus peaks"
+echo "when available, ensuring the most reproducible results."
+echo ""
 
 # Check if required input files exist
-echo ""
 echo "Checking input files..."
 echo "----------------------"
 
