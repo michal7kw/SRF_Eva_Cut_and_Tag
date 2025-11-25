@@ -37,9 +37,10 @@ Legacy/
 
 *.log
 
-*.png
-*.pdf
-*.csv
+# *.png
+# *.pdf
+# *.csv
 *.bed
 *.narrowPeak
 results/report/
+results/07_analysis_narrow/DiffBind_MA_plots.png
