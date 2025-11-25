@@ -1,6 +1,16 @@
 #!/bin/bash
 
-#===============================================================================
+#SBATCH --job-name=15_cell_death_proliferation_analysis
+#SBATCH --account=kubacki.michal
+#SBATCH --mem=16GB
+#SBATCH --time=02:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=4
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=kubacki.michal@hsr.it
+#SBATCH --error="./logs/15_cell_death_proliferation_analysis.err"
+#SBATCH --output="./logs/15_cell_death_proliferation_analysis.out"
+
 # SCRIPT: run_cell_death_analysis.sh
 # PURPOSE: Execute cell death and proliferation pathway analysis
 #
@@ -16,18 +26,7 @@
 # 3. Reactome pathway analysis
 # 4. Comparative analysis between TES, TESmut, and TEAD1
 # 5. Gene overlap and functional similarity analysis
-#===============================================================================
 
-#SBATCH --job-name=cell_death_analysis
-#SBATCH --account=kubacki.michal
-#SBATCH --mem=16GB
-#SBATCH --time=02:00:00
-#SBATCH --nodes=1
-#SBATCH --ntasks=4
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=kubacki.michal@hsr.it
-#SBATCH --error="./logs/cell_death_analysis.err"
-#SBATCH --output="./logs/cell_death_analysis.out"
 
 # Set up conda environment with required tools
 source /opt/common/tools/ric.cosr/miniconda3/bin/activate

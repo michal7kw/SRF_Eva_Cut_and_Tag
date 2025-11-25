@@ -14,7 +14,7 @@ library(readr)
 library(tibble)
 
 # Set working directory
-setwd("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva")
+setwd("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG")
 
 # Create output directory
 dir.create("results/13_ses_overlap/plots", showWarnings = FALSE, recursive = TRUE)
@@ -103,12 +103,16 @@ p1 <- ggplot(individual_data, aes(x = sample, y = overlap_percentage, fill = gro
   facet_wrap(~peak_type, scales = "free_x") +
   scale_fill_manual(values = group_colors) +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        plot.title = element_text(hjust = 0.5)) +
-  labs(title = "Percentage of Peaks Overlapping with SES Consensus",
-       subtitle = "Individual Replicates",
-       x = "Sample", y = "Overlap Percentage (%)",
-       fill = "Group") +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  labs(
+    title = "Percentage of Peaks Overlapping with SES Consensus",
+    subtitle = "Individual Replicates",
+    x = "Sample", y = "Overlap Percentage (%)",
+    fill = "Group"
+  ) +
   ylim(0, 50)
 
 # Combined samples plot
@@ -118,10 +122,12 @@ p2 <- ggplot(combined_data, aes(x = sample, y = overlap_percentage, fill = group
   scale_fill_manual(values = group_colors) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(title = "Percentage of Peaks Overlapping with SES Consensus",
-       subtitle = "Combined Samples",
-       x = "Sample", y = "Overlap Percentage (%)",
-       fill = "Group") +
+  labs(
+    title = "Percentage of Peaks Overlapping with SES Consensus",
+    subtitle = "Combined Samples",
+    x = "Sample", y = "Overlap Percentage (%)",
+    fill = "Group"
+  ) +
   ylim(0, 50)
 
 # Save plots
@@ -137,12 +143,16 @@ p3 <- ggplot(individual_data, aes(x = sample, y = ses_coverage_percentage, fill 
   facet_wrap(~peak_type, scales = "free_x") +
   scale_fill_manual(values = group_colors) +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        plot.title = element_text(hjust = 0.5)) +
-  labs(title = "Percentage of SES Consensus Peaks Covered",
-       subtitle = "Individual Replicates",
-       x = "Sample", y = "SES Coverage (%)",
-       fill = "Group") +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  labs(
+    title = "Percentage of SES Consensus Peaks Covered",
+    subtitle = "Individual Replicates",
+    x = "Sample", y = "SES Coverage (%)",
+    fill = "Group"
+  ) +
   ylim(0, 25)
 
 p4 <- ggplot(combined_data, aes(x = sample, y = ses_coverage_percentage, fill = group)) +
@@ -151,10 +161,12 @@ p4 <- ggplot(combined_data, aes(x = sample, y = ses_coverage_percentage, fill = 
   scale_fill_manual(values = group_colors) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(title = "Percentage of SES Consensus Peaks Covered",
-       subtitle = "Combined Samples",
-       x = "Sample", y = "SES Coverage (%)",
-       fill = "Group") +
+  labs(
+    title = "Percentage of SES Consensus Peaks Covered",
+    subtitle = "Combined Samples",
+    x = "Sample", y = "SES Coverage (%)",
+    fill = "Group"
+  ) +
   ylim(0, 25)
 
 pdf("results/13_ses_overlap/plots/ses_coverage_barplots.pdf", width = 14, height = 10)
@@ -164,19 +176,24 @@ dev.off()
 # 3. Scatter plot: Overlap vs SES Coverage
 cat("Creating scatter plot...\n")
 
-p5 <- ggplot(overlap_data, aes(x = overlap_percentage, y = ses_coverage_percentage,
-                               color = group, shape = peak_type, size = total_peaks)) +
+p5 <- ggplot(overlap_data, aes(
+  x = overlap_percentage, y = ses_coverage_percentage,
+  color = group, shape = peak_type, size = total_peaks
+)) +
   geom_point(alpha = 0.7) +
   scale_color_manual(values = group_colors) +
   scale_size_continuous(range = c(2, 8), name = "Total Peaks") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(title = "Peak Overlap vs SES Coverage",
-       subtitle = "Bubble size represents total number of peaks",
-       x = "Percentage of Peaks Overlapping SES (%)",
-       y = "Percentage of SES Peaks Covered (%)",
-       color = "Group", shape = "Peak Type") +
-  xlim(0, 50) + ylim(0, 25)
+  labs(
+    title = "Peak Overlap vs SES Coverage",
+    subtitle = "Bubble size represents total number of peaks",
+    x = "Percentage of Peaks Overlapping SES (%)",
+    y = "Percentage of SES Peaks Covered (%)",
+    color = "Group", shape = "Peak Type"
+  ) +
+  xlim(0, 50) +
+  ylim(0, 25)
 
 ggsave("results/13_ses_overlap/plots/overlap_vs_coverage_scatter.pdf", p5, width = 10, height = 8)
 
@@ -186,8 +203,10 @@ cat("Creating heatmap...\n")
 # Prepare matrix for heatmap
 heatmap_data <- overlap_data %>%
   select(sample, peak_type, overlap_percentage) %>%
-  pivot_wider(names_from = peak_type, values_from = overlap_percentage,
-              values_fn = mean) %>%
+  pivot_wider(
+    names_from = peak_type, values_from = overlap_percentage,
+    values_fn = mean
+  ) %>%
   column_to_rownames("sample")
 
 # Handle missing values
@@ -195,16 +214,17 @@ heatmap_data[is.na(heatmap_data)] <- 0
 
 pdf("results/13_ses_overlap/plots/overlap_heatmap.pdf", width = 8, height = 10)
 pheatmap(as.matrix(heatmap_data),
-         color = colorRampPalette(c("white", "lightblue", "darkblue"))(50),
-         cluster_rows = TRUE,
-         cluster_cols = FALSE,
-         display_numbers = TRUE,
-         number_format = "%.1f",
-         main = "Peak Overlap with SES Consensus (%)",
-         cellwidth = 60,
-         cellheight = 20,
-         fontsize = 10,
-         fontsize_number = 8)
+  color = colorRampPalette(c("white", "lightblue", "darkblue"))(50),
+  cluster_rows = TRUE,
+  cluster_cols = FALSE,
+  display_numbers = TRUE,
+  number_format = "%.1f",
+  main = "Peak Overlap with SES Consensus (%)",
+  cellwidth = 60,
+  cellheight = 20,
+  fontsize = 10,
+  fontsize_number = 8
+)
 dev.off()
 
 # 5. Summary statistics table
@@ -218,7 +238,7 @@ summary_stats <- overlap_data %>%
     sd_overlap = round(sd(overlap_percentage), 2),
     mean_ses_coverage = round(mean(ses_coverage_percentage), 2),
     sd_ses_coverage = round(sd(ses_coverage_percentage), 2),
-    .groups = 'drop'
+    .groups = "drop"
   )
 
 write.csv(summary_stats, "results/13_ses_overlap/plots/summary_statistics.csv", row.names = FALSE)
@@ -233,10 +253,12 @@ p6 <- ggplot(individual_data, aes(x = group, y = overlap_percentage, fill = grou
   scale_fill_manual(values = group_colors) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(title = "Distribution of Overlap Percentages by Group",
-       subtitle = "Individual replicates with jittered points",
-       x = "Group", y = "Overlap Percentage (%)",
-       fill = "Group") +
+  labs(
+    title = "Distribution of Overlap Percentages by Group",
+    subtitle = "Individual replicates with jittered points",
+    x = "Group", y = "Overlap Percentage (%)",
+    fill = "Group"
+  ) +
   ylim(0, 50)
 
 p7 <- ggplot(individual_data, aes(x = group, y = ses_coverage_percentage, fill = group)) +
@@ -246,10 +268,12 @@ p7 <- ggplot(individual_data, aes(x = group, y = ses_coverage_percentage, fill =
   scale_fill_manual(values = group_colors) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(title = "Distribution of SES Coverage by Group",
-       subtitle = "Individual replicates with jittered points",
-       x = "Group", y = "SES Coverage (%)",
-       fill = "Group") +
+  labs(
+    title = "Distribution of SES Coverage by Group",
+    subtitle = "Individual replicates with jittered points",
+    x = "Group", y = "SES Coverage (%)",
+    fill = "Group"
+  ) +
   ylim(0, 25)
 
 pdf("results/13_ses_overlap/plots/group_comparison_boxplots.pdf", width = 12, height = 8)
@@ -264,11 +288,15 @@ p8 <- ggplot(overlap_data, aes(x = sample, y = overlapping_peaks, fill = group))
   facet_wrap(~peak_type, scales = "free") +
   scale_fill_manual(values = group_colors) +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        plot.title = element_text(hjust = 0.5)) +
-  labs(title = "Absolute Number of Overlapping Peaks",
-       x = "Sample", y = "Number of Overlapping Peaks",
-       fill = "Group")
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  labs(
+    title = "Absolute Number of Overlapping Peaks",
+    x = "Sample", y = "Number of Overlapping Peaks",
+    fill = "Group"
+  )
 
 ggsave("results/13_ses_overlap/plots/absolute_overlap_numbers.pdf", p8, width = 14, height = 8)
 
@@ -285,24 +313,34 @@ summary_text <- paste(
   "Key Findings:",
   "",
   "1. OVERLAP PERCENTAGES:",
-  sprintf("   - TES samples: %.1f%% ± %.1f%% (narrow), %.1f%% (broad combined)",
-          mean(individual_data[individual_data$group == "TES" & individual_data$peak_type == "narrow", "overlap_percentage"]),
-          sd(individual_data[individual_data$group == "TES" & individual_data$peak_type == "narrow", "overlap_percentage"]),
-          combined_data[combined_data$group == "TES" & combined_data$peak_type == "broad", "overlap_percentage"]),
-  sprintf("   - TESmut samples: %.1f%% ± %.1f%% (narrow), %.1f%% (broad combined)",
-          mean(individual_data[individual_data$group == "TESmut" & individual_data$peak_type == "narrow", "overlap_percentage"]),
-          sd(individual_data[individual_data$group == "TESmut" & individual_data$peak_type == "narrow", "overlap_percentage"]),
-          combined_data[combined_data$group == "TESmut" & combined_data$peak_type == "broad", "overlap_percentage"]),
-  sprintf("   - TEAD1 samples: %.1f%% ± %.1f%% (narrow), %.1f%% (broad combined)",
-          mean(individual_data[individual_data$group == "TEAD1" & individual_data$peak_type == "narrow", "overlap_percentage"]),
-          sd(individual_data[individual_data$group == "TEAD1" & individual_data$peak_type == "narrow", "overlap_percentage"]),
-          combined_data[combined_data$group == "TEAD1" & combined_data$peak_type == "broad", "overlap_percentage"]),
+  sprintf(
+    "   - TES samples: %.1f%% ± %.1f%% (narrow), %.1f%% (broad combined)",
+    mean(individual_data[individual_data$group == "TES" & individual_data$peak_type == "narrow", "overlap_percentage"]),
+    sd(individual_data[individual_data$group == "TES" & individual_data$peak_type == "narrow", "overlap_percentage"]),
+    combined_data[combined_data$group == "TES" & combined_data$peak_type == "broad", "overlap_percentage"]
+  ),
+  sprintf(
+    "   - TESmut samples: %.1f%% ± %.1f%% (narrow), %.1f%% (broad combined)",
+    mean(individual_data[individual_data$group == "TESmut" & individual_data$peak_type == "narrow", "overlap_percentage"]),
+    sd(individual_data[individual_data$group == "TESmut" & individual_data$peak_type == "narrow", "overlap_percentage"]),
+    combined_data[combined_data$group == "TESmut" & combined_data$peak_type == "broad", "overlap_percentage"]
+  ),
+  sprintf(
+    "   - TEAD1 samples: %.1f%% ± %.1f%% (narrow), %.1f%% (broad combined)",
+    mean(individual_data[individual_data$group == "TEAD1" & individual_data$peak_type == "narrow", "overlap_percentage"]),
+    sd(individual_data[individual_data$group == "TEAD1" & individual_data$peak_type == "narrow", "overlap_percentage"]),
+    combined_data[combined_data$group == "TEAD1" & combined_data$peak_type == "broad", "overlap_percentage"]
+  ),
   "",
   "2. SES COVERAGE:",
-  sprintf("   - Highest coverage by TEAD1 broad peaks: %.1f%%",
-          max(combined_data[combined_data$group == "TEAD1", "ses_coverage_percentage"])),
-  sprintf("   - TESmut shows consistently high overlap rates: %.1f%% average",
-          mean(individual_data[individual_data$group == "TESmut", "overlap_percentage"])),
+  sprintf(
+    "   - Highest coverage by TEAD1 broad peaks: %.1f%%",
+    max(combined_data[combined_data$group == "TEAD1", "ses_coverage_percentage"])
+  ),
+  sprintf(
+    "   - TESmut shows consistently high overlap rates: %.1f%% average",
+    mean(individual_data[individual_data$group == "TESmut", "overlap_percentage"])
+  ),
   "",
   "3. PEAK TYPE COMPARISON:",
   "   - Broad peaks generally show higher SES coverage than narrow peaks",

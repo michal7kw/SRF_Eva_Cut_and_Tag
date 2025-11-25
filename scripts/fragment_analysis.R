@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-#===============================================================================
+# ===============================================================================
 # SCRIPT: fragment_analysis.R
 # PURPOSE: Fragment size analysis for Cut&Tag quality assessment
 #
@@ -8,14 +8,14 @@
 # This script performs fragment size distribution analysis which is crucial
 # for Cut&Tag data quality assessment. It analyzes insert size distributions
 # to ensure proper tagmentation and library preparation.
-#===============================================================================
+# ===============================================================================
 
 library(ggplot2)
 library(dplyr)
 library(gridExtra)
 
 # Set working directory
-setwd("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva")
+setwd("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG")
 
 # Create output directory
 dir.create("results/fragment_analysis", recursive = TRUE, showWarnings = FALSE)
@@ -39,8 +39,10 @@ extract_fragment_sizes <- function(bam_file, sample_name) {
 }
 
 # Sample list
-samples <- c("TES-1", "TES-2", "TES-3", "TESmut-1", "TESmut-2", "TESmut-3",
-             "TEAD1-1", "TEAD1-2", "TEAD1-3", "IggMs", "IggRb")
+samples <- c(
+    "TES-1", "TES-2", "TES-3", "TESmut-1", "TESmut-2", "TESmut-3",
+    "TEAD1-1", "TEAD1-2", "TEAD1-3", "IggMs", "IggRb"
+)
 
 # Extract fragment sizes for all samples
 fragment_data_list <- list()
@@ -76,7 +78,7 @@ fragment_stats <- fragment_data %>%
         q25 = quantile(fragment_size, 0.25, na.rm = TRUE),
         q75 = quantile(fragment_size, 0.75, na.rm = TRUE),
         nucleosome_peak = fragment_size[which.max(table(cut(fragment_size, breaks = seq(140, 180, by = 2))))],
-        .groups = 'drop'
+        .groups = "drop"
     )
 
 # Save statistics
@@ -86,26 +88,34 @@ write.csv(fragment_stats, "results/fragment_analysis/fragment_statistics.csv", r
 p1 <- ggplot(fragment_data, aes(x = fragment_size, fill = group)) +
     geom_histogram(bins = 100, alpha = 0.7, position = "identity") +
     facet_wrap(~sample, scales = "free_y") +
-    labs(title = "Fragment Size Distribution by Sample",
-         x = "Fragment Size (bp)", y = "Count") +
+    labs(
+        title = "Fragment Size Distribution by Sample",
+        x = "Fragment Size (bp)", y = "Count"
+    ) +
     theme_minimal() +
     scale_fill_brewer(type = "qual", palette = "Set1")
 
 # Overlay plot comparing groups
 p2 <- ggplot(fragment_data, aes(x = fragment_size, color = group)) +
     geom_density(size = 1.2, alpha = 0.8) +
-    labs(title = "Fragment Size Distribution by Group",
-         x = "Fragment Size (bp)", y = "Density") +
+    labs(
+        title = "Fragment Size Distribution by Group",
+        x = "Fragment Size (bp)", y = "Density"
+    ) +
     theme_minimal() +
     scale_color_brewer(type = "qual", palette = "Set1") +
     xlim(0, 500)
 
 # Nucleosome pattern analysis (focused on 100-300bp range)
-p3 <- ggplot(filter(fragment_data, fragment_size >= 100 & fragment_size <= 300),
-             aes(x = fragment_size, color = group)) +
+p3 <- ggplot(
+    filter(fragment_data, fragment_size >= 100 & fragment_size <= 300),
+    aes(x = fragment_size, color = group)
+) +
     geom_density(size = 1.2, alpha = 0.8) +
-    labs(title = "Nucleosome Pattern Analysis (100-300bp)",
-         x = "Fragment Size (bp)", y = "Density") +
+    labs(
+        title = "Nucleosome Pattern Analysis (100-300bp)",
+        x = "Fragment Size (bp)", y = "Density"
+    ) +
     theme_minimal() +
     scale_color_brewer(type = "qual", palette = "Set1") +
     geom_vline(xintercept = c(147, 294), linetype = "dashed", alpha = 0.5)
@@ -113,8 +123,10 @@ p3 <- ggplot(filter(fragment_data, fragment_size >= 100 & fragment_size <= 300),
 # Box plot showing median fragment sizes
 p4 <- ggplot(fragment_data, aes(x = sample, y = fragment_size, fill = group)) +
     geom_boxplot(outlier.size = 0.1) +
-    labs(title = "Fragment Size Distribution by Sample",
-         x = "Sample", y = "Fragment Size (bp)") +
+    labs(
+        title = "Fragment Size Distribution by Sample",
+        x = "Sample", y = "Fragment Size (bp)"
+    ) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     scale_fill_brewer(type = "qual", palette = "Set1") +

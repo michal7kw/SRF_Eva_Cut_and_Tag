@@ -12,7 +12,7 @@
 # 3. Enhanced GO enrichment analysis
 #===============================================================================
 
-#SBATCH --job-name=additional_analyses
+#SBATCH --job-name=16_run_additional_analyses
 #SBATCH --account=kubacki.michal
 #SBATCH --mem=16GB
 #SBATCH --time=02:00:00
@@ -20,8 +20,8 @@
 #SBATCH --ntasks=4
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=kubacki.michal@hsr.it
-#SBATCH --error="./logs/additional_analyses.err"
-#SBATCH --output="./logs/additional_analyses.out"
+#SBATCH --error="./logs/16_run_additional_analyses.err"
+#SBATCH --output="./logs/16_run_additional_analyses.out"
 
 # Set up conda environment with required tools
 source /opt/common/tools/ric.cosr/miniconda3/bin/activate

@@ -14,7 +14,7 @@ library(dplyr)
 library(yaml)
 
 # Load configuration
-config <- yaml.load_file("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva/config/pipeline_config.yaml")
+config <- yaml.load_file("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG/config/pipeline_config.yaml")
 setwd(config$directories$base)
 
 # Create comprehensive output directory
@@ -51,7 +51,8 @@ create_sample_sheet <- function(config) {
 # Create and validate sample sheet
 samples <- create_sample_sheet(config)
 write.csv(samples, file.path(config$directories$config, "diffbind_samplesheet_improved.csv"),
-          row.names = FALSE, quote = FALSE)
+  row.names = FALSE, quote = FALSE
+)
 
 # Validate input files exist
 cat("Validating input files...\n")
@@ -73,23 +74,25 @@ if (length(missing_files) > 0) {
 
 # Load DiffBind object with error handling
 cat("Loading DiffBind data...\n")
-tryCatch({
-  dba_obj <- dba(sampleSheet = file.path(config$directories$config, "diffbind_samplesheet_improved.csv"))
+tryCatch(
+  {
+    dba_obj <- dba(sampleSheet = file.path(config$directories$config, "diffbind_samplesheet_improved.csv"))
 
-  # Initial exploration
-  cat(paste("Loaded", nrow(dba_obj$samples), "samples\n"))
-  cat("Sample overview:\n")
-  print(dba_obj)
+    # Initial exploration
+    cat(paste("Loaded", nrow(dba_obj$samples), "samples\n"))
+    cat("Sample overview:\n")
+    print(dba_obj)
 
-  # Generate initial correlation plot before counting
-  pdf(file.path(output_dir, "01_initial_correlation.pdf"), width = 10, height = 8)
-  dba.plotHeatmap(dba_obj, correlations = TRUE, main = "Initial Peak Overlap Correlations")
-  dev.off()
-
-}, error = function(e) {
-  cat("Error loading DiffBind data:", e$message, "\n")
-  quit(status = 1)
-})
+    # Generate initial correlation plot before counting
+    pdf(file.path(output_dir, "01_initial_correlation.pdf"), width = 10, height = 8)
+    dba.plotHeatmap(dba_obj, correlations = TRUE, main = "Initial Peak Overlap Correlations")
+    dev.off()
+  },
+  error = function(e) {
+    cat("Error loading DiffBind data:", e$message, "\n")
+    quit(status = 1)
+  }
+)
 
 # Count reads with quality control
 cat("Counting reads in peaks...\n")
@@ -118,8 +121,10 @@ dev.off()
 
 # PCA analysis with enhanced visualization
 pdf(file.path(output_dir, "03_enhanced_PCA.pdf"), width = 12, height = 10)
-dba.plotPCA(dba_obj, DBA_CONDITION, label = DBA_ID,
-            main = "PCA Analysis - All Samples")
+dba.plotPCA(dba_obj, DBA_CONDITION,
+  label = DBA_ID,
+  main = "PCA Analysis - All Samples"
+)
 dev.off()
 
 # Set up contrasts based on configuration
@@ -127,24 +132,29 @@ cat("Setting up statistical contrasts...\n")
 for (i in seq_along(config$contrasts)) {
   contrast_info <- config$contrasts[[i]]
 
-  tryCatch({
-    dba_obj <- dba.contrast(dba_obj,
-                           group1 = dba_obj$masks[[contrast_info$group1]],
-                           group2 = dba_obj$masks[[contrast_info$group2]],
-                           name1 = contrast_info$group1,
-                           name2 = contrast_info$group2)
-    cat(paste("Added contrast:", contrast_info$name, "\n"))
-  }, error = function(e) {
-    cat(paste("Error adding contrast", contrast_info$name, ":", e$message, "\n"))
-  })
+  tryCatch(
+    {
+      dba_obj <- dba.contrast(dba_obj,
+        group1 = dba_obj$masks[[contrast_info$group1]],
+        group2 = dba_obj$masks[[contrast_info$group2]],
+        name1 = contrast_info$group1,
+        name2 = contrast_info$group2
+      )
+      cat(paste("Added contrast:", contrast_info$name, "\n"))
+    },
+    error = function(e) {
+      cat(paste("Error adding contrast", contrast_info$name, ":", e$message, "\n"))
+    }
+  )
 }
 
 # Perform differential analysis with enhanced parameters
 cat("Performing differential binding analysis...\n")
 dba_obj <- dba.analyze(dba_obj,
-                      method = DBA_DESEQ2,
-                      bFullLibrarySize = TRUE,
-                      bSubControl = TRUE)
+  method = DBA_DESEQ2,
+  bFullLibrarySize = TRUE,
+  bSubControl = TRUE
+)
 
 # Generate enhanced results for each contrast
 for (i in 1:length(config$contrasts)) {
@@ -154,23 +164,31 @@ for (i in 1:length(config$contrasts)) {
   cat(paste("Processing contrast:", contrast_name, "\n"))
 
   # Get results with multiple FDR thresholds
-  res_strict <- dba.report(dba_obj, contrast = i, th = 0.01)  # Strict
+  res_strict <- dba.report(dba_obj, contrast = i, th = 0.01) # Strict
   res_standard <- dba.report(dba_obj, contrast = i, th = 0.05) # Standard
-  res_all <- dba.report(dba_obj, contrast = i, th = 1)         # All sites
+  res_all <- dba.report(dba_obj, contrast = i, th = 1) # All sites
 
   # Save results
-  write.csv(as.data.frame(res_strict),
-            file.path(output_dir, paste0(contrast_name, "_strict_FDR001.csv")))
-  write.csv(as.data.frame(res_standard),
-            file.path(output_dir, paste0(contrast_name, "_standard_FDR005.csv")))
-  write.csv(as.data.frame(res_all),
-            file.path(output_dir, paste0(contrast_name, "_all_sites.csv")))
+  write.csv(
+    as.data.frame(res_strict),
+    file.path(output_dir, paste0(contrast_name, "_strict_FDR001.csv"))
+  )
+  write.csv(
+    as.data.frame(res_standard),
+    file.path(output_dir, paste0(contrast_name, "_standard_FDR005.csv"))
+  )
+  write.csv(
+    as.data.frame(res_all),
+    file.path(output_dir, paste0(contrast_name, "_all_sites.csv"))
+  )
 
   # Enhanced MA plot
   pdf(file.path(output_dir, paste0(contrast_name, "_MA_plot.pdf")), width = 10, height = 8)
-  dba.plotMA(dba_obj, contrast = i,
-             main = paste("MA Plot:", contrast_info$description),
-             sub = paste("FDR < 0.05:", length(res_standard), "sites"))
+  dba.plotMA(dba_obj,
+    contrast = i,
+    main = paste("MA Plot:", contrast_info$description),
+    sub = paste("FDR < 0.05:", length(res_standard), "sites")
+  )
   dev.off()
 
   # Volcano plot
@@ -186,14 +204,18 @@ for (i in 1:length(config$contrasts)) {
       theme_classic() +
       geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "blue") +
       geom_vline(xintercept = c(-log2(1.5), log2(1.5)), linetype = "dashed", color = "blue") +
-      labs(title = paste("Volcano Plot:", contrast_info$description),
-           x = "log2 Fold Change",
-           y = "-log10(FDR)",
-           subtitle = paste("Significant sites (FDR<0.05, |FC|>1.5):", sum(res_df$significant))) +
+      labs(
+        title = paste("Volcano Plot:", contrast_info$description),
+        x = "log2 Fold Change",
+        y = "-log10(FDR)",
+        subtitle = paste("Significant sites (FDR<0.05, |FC|>1.5):", sum(res_df$significant))
+      ) +
       theme(plot.title = element_text(hjust = 0.5, size = 14, face = "bold"))
 
     ggsave(file.path(output_dir, paste0(contrast_name, "_volcano_plot.pdf")),
-           p_volcano, width = 10, height = 8)
+      p_volcano,
+      width = 10, height = 8
+    )
   }
 
   # Statistics summary
@@ -218,15 +240,19 @@ write.csv(all_stats, file.path(output_dir, "differential_binding_statistics.csv"
 
 # Generate final summary plots
 pdf(file.path(output_dir, "04_final_correlation_heatmap.pdf"), width = 12, height = 12)
-dba.plotHeatmap(dba_obj, correlations = TRUE,
-                main = "Final Sample Correlations\n(Post-Analysis)")
+dba.plotHeatmap(dba_obj,
+  correlations = TRUE,
+  main = "Final Sample Correlations\n(Post-Analysis)"
+)
 dev.off()
 
 # Venn diagram if multiple contrasts
 if (length(config$contrasts) > 1) {
   pdf(file.path(output_dir, "05_contrast_venn_diagram.pdf"), width = 12, height = 10)
-  dba.plotVenn(dba_obj, contrast = 1:length(config$contrasts),
-               main = "Overlap of Differential Binding Sites")
+  dba.plotVenn(dba_obj,
+    contrast = 1:length(config$contrasts),
+    main = "Overlap of Differential Binding Sites"
+  )
   dev.off()
 }
 

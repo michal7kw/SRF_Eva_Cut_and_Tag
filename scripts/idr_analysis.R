@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-#===============================================================================
+# ===============================================================================
 # SCRIPT: idr_analysis.R
 # PURPOSE: Irreproducible Discovery Rate (IDR) analysis for Cut&Tag replicates
 #
@@ -8,7 +8,7 @@
 # This script performs IDR analysis to assess reproducibility between
 # biological replicates. IDR is crucial for ensuring that peaks are
 # consistently detected across replicates before downstream analysis.
-#===============================================================================
+# ===============================================================================
 
 library(GenomicRanges)
 library(rtracklayer)
@@ -17,7 +17,7 @@ library(corrplot)
 library(RColorBrewer)
 
 # Set working directory
-setwd("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva")
+setwd("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG")
 
 # Create output directory
 dir.create("results/idr_analysis", recursive = TRUE, showWarnings = FALSE)
@@ -30,23 +30,29 @@ read_narrowpeak <- function(file_path) {
     }
 
     peaks <- read.table(file_path, sep = "\t", stringsAsFactors = FALSE)
-    colnames(peaks) <- c("chr", "start", "end", "name", "score", "strand",
-                        "signalValue", "pValue", "qValue", "peak")
+    colnames(peaks) <- c(
+        "chr", "start", "end", "name", "score", "strand",
+        "signalValue", "pValue", "qValue", "peak"
+    )
 
     # Create GRanges object
-    gr <- GRanges(seqnames = peaks$chr,
-                  ranges = IRanges(start = peaks$start + 1, end = peaks$end),
-                  score = peaks$score,
-                  signalValue = peaks$signalValue,
-                  pValue = peaks$pValue,
-                  qValue = peaks$qValue)
+    gr <- GRanges(
+        seqnames = peaks$chr,
+        ranges = IRanges(start = peaks$start + 1, end = peaks$end),
+        score = peaks$score,
+        signalValue = peaks$signalValue,
+        pValue = peaks$pValue,
+        qValue = peaks$qValue
+    )
 
     return(gr)
 }
 
 # Function to calculate overlap between two peak sets
 calculate_overlap <- function(peaks1, peaks2, min_overlap = 0.5) {
-    if (is.null(peaks1) || is.null(peaks2)) return(0)
+    if (is.null(peaks1) || is.null(peaks2)) {
+        return(0)
+    }
 
     overlaps <- findOverlaps(peaks1, peaks2)
 
@@ -60,7 +66,7 @@ calculate_overlap <- function(peaks1, peaks2, min_overlap = 0.5) {
     width2 <- width(peaks2[hits2])
 
     # Reciprocal overlap: min(overlap/width1, overlap/width2) >= threshold
-    reciprocal_overlap <- pmin(overlap_width/width1, overlap_width/width2) >= min_overlap
+    reciprocal_overlap <- pmin(overlap_width / width1, overlap_width / width2) >= min_overlap
 
     # Count high-quality overlaps
     n_overlaps <- sum(reciprocal_overlap)
@@ -110,8 +116,8 @@ for (group_name in names(groups)) {
     cat("Analyzing group:", group_name, "\n")
 
     # Pairwise comparisons within group
-    for (i in 1:(length(group_samples)-1)) {
-        for (j in (i+1):length(group_samples)) {
+    for (i in 1:(length(group_samples) - 1)) {
+        for (j in (i + 1):length(group_samples)) {
             sample1 <- group_samples[i]
             sample2 <- group_samples[j]
 
@@ -126,10 +132,12 @@ for (group_name in names(groups)) {
             correlation_matrix[sample1, sample2] <- correlation
             correlation_matrix[sample2, sample1] <- correlation
 
-            cat(sprintf("%s vs %s: %d overlaps, %.2f%% and %.2f%% overlap rates, correlation: %.3f\n",
-                       sample1, sample2, overlap_res$n_overlaps,
-                       overlap_res$overlap_rate1 * 100, overlap_res$overlap_rate2 * 100,
-                       correlation))
+            cat(sprintf(
+                "%s vs %s: %d overlaps, %.2f%% and %.2f%% overlap rates, correlation: %.3f\n",
+                sample1, sample2, overlap_res$n_overlaps,
+                overlap_res$overlap_rate1 * 100, overlap_res$overlap_rate2 * 100,
+                correlation
+            ))
         }
     }
     cat("\n")
@@ -143,9 +151,15 @@ overlap_summary <- data.frame(
     comparison = names(overlap_results),
     group = sapply(names(overlap_results), function(x) {
         sample1 <- strsplit(x, "_vs_")[[1]][1]
-        if (sample1 %in% groups$TES) return("TES")
-        if (sample1 %in% groups$TESmut) return("TESmut")
-        if (sample1 %in% groups$TEAD1) return("TEAD1")
+        if (sample1 %in% groups$TES) {
+            return("TES")
+        }
+        if (sample1 %in% groups$TESmut) {
+            return("TESmut")
+        }
+        if (sample1 %in% groups$TEAD1) {
+            return("TEAD1")
+        }
         return("Unknown")
     }),
     n_overlaps = sapply(overlap_results, function(x) x$n_overlaps),
@@ -163,9 +177,11 @@ write.csv(overlap_summary, "results/idr_analysis/replicate_overlap_summary.csv",
 
 # Create visualizations
 pdf("results/idr_analysis/correlation_matrix.pdf", width = 10, height = 8)
-corrplot(correlation_matrix, method = "color", type = "upper",
-         order = "hclust", tl.cex = 0.8, tl.col = "black",
-         col = brewer.pal(n = 10, name = "RdYlBu"))
+corrplot(correlation_matrix,
+    method = "color", type = "upper",
+    order = "hclust", tl.cex = 0.8, tl.col = "black",
+    col = brewer.pal(n = 10, name = "RdYlBu")
+)
 title("Replicate Correlation Matrix\n(Based on Peak Overlap)")
 dev.off()
 
@@ -173,8 +189,10 @@ dev.off()
 p1 <- ggplot(overlap_summary, aes(x = group, y = avg_overlap_rate, fill = group)) +
     geom_boxplot(alpha = 0.7) +
     geom_jitter(width = 0.2, alpha = 0.8, size = 2) +
-    labs(title = "Average Overlap Rate Between Replicates",
-         x = "Experimental Group", y = "Average Overlap Rate") +
+    labs(
+        title = "Average Overlap Rate Between Replicates",
+        x = "Experimental Group", y = "Average Overlap Rate"
+    ) +
     theme_minimal() +
     scale_fill_brewer(type = "qual", palette = "Set1") +
     theme(legend.position = "none")
@@ -185,8 +203,10 @@ ggsave("results/idr_analysis/overlap_rates_by_group.png", p1, width = 8, height 
 # Correlation distribution
 p2 <- ggplot(overlap_summary, aes(x = correlation, fill = group)) +
     geom_histogram(bins = 20, alpha = 0.7, position = "dodge") +
-    labs(title = "Distribution of Replicate Correlations",
-         x = "Correlation (sqrt of product of overlap rates)", y = "Count") +
+    labs(
+        title = "Distribution of Replicate Correlations",
+        x = "Correlation (sqrt of product of overlap rates)", y = "Count"
+    ) +
     theme_minimal() +
     scale_fill_brewer(type = "qual", palette = "Set1")
 
@@ -209,7 +229,7 @@ group_summary <- overlap_summary %>%
         mean_overlap = mean(avg_overlap_rate, na.rm = TRUE),
         min_overlap = min(avg_overlap_rate, na.rm = TRUE),
         max_overlap = max(avg_overlap_rate, na.rm = TRUE),
-        .groups = 'drop'
+        .groups = "drop"
     )
 
 print(group_summary)
@@ -222,16 +242,16 @@ for (i in 1:nrow(group_summary)) {
     min_overlap <- group_summary$min_overlap[i]
 
     if (mean_overlap > 0.7) {
-        cat("EXCELLENT:", group, "- Mean overlap:", sprintf("%.1f%%", mean_overlap*100), "\n")
+        cat("EXCELLENT:", group, "- Mean overlap:", sprintf("%.1f%%", mean_overlap * 100), "\n")
     } else if (mean_overlap > 0.5) {
-        cat("GOOD:", group, "- Mean overlap:", sprintf("%.1f%%", mean_overlap*100), "\n")
+        cat("GOOD:", group, "- Mean overlap:", sprintf("%.1f%%", mean_overlap * 100), "\n")
     } else if (mean_overlap > 0.3) {
-        cat("MODERATE:", group, "- Mean overlap:", sprintf("%.1f%%", mean_overlap*100), "\n")
+        cat("MODERATE:", group, "- Mean overlap:", sprintf("%.1f%%", mean_overlap * 100), "\n")
         if (min_overlap < 0.3) {
             cat("  WARNING: Some replicate pairs have <30% overlap\n")
         }
     } else {
-        cat("POOR:", group, "- Mean overlap:", sprintf("%.1f%%", mean_overlap*100), "\n")
+        cat("POOR:", group, "- Mean overlap:", sprintf("%.1f%%", mean_overlap * 100), "\n")
         cat("  CRITICAL: Consider excluding low-quality replicates\n")
     }
 }

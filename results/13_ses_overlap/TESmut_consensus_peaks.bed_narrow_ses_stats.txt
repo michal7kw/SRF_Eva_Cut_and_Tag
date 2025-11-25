@@ -1,0 +1,8 @@
+Sample: TESmut_consensus_peaks.bed
+Peak Type: narrow
+Total TESmut_consensus_peaks.bed peaks: 13842
+TESmut_consensus_peaks.bed peaks overlapping SES: 6203
+Percentage of TESmut_consensus_peaks.bed peaks overlapping SES: 44.81%
+SES peaks overlapped by TESmut_consensus_peaks.bed: 5351
+Total SES consensus peaks: 44726
+Percentage of SES peaks covered by TESmut_consensus_peaks.bed: 11.96%

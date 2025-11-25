@@ -30,9 +30,16 @@ results/07_analysis_narrow/TES_motifs/
 *.md
 
 # ...but keep any README.md (in root or subfolders)
-# !README.md
-# !**/README.md
+!README.md
+!**/README.md
 
 Legacy/
 
 *.log
+
+*.png
+*.pdf
+*.csv
+*.bed
+*.narrowPeak
+results/report/

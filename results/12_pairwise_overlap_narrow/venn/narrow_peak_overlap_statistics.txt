@@ -1,0 +1,4 @@
+Comparison	Overlap	First_Only	Second_Only	First_Total	Second_Total	Overlap_Percent_First	Overlap_Percent_Second
+TES vs TESmut	0	0	0	17601	13842	0	0
+TES vs TEAD1	0	0	0	17601	11012	0	0
+TESmut vs TEAD1	0	0	0	13842	11012	0	0

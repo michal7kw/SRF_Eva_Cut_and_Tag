@@ -6,15 +6,17 @@ library(ggplot2)
 library(GenomeInfoDb)
 
 # Set working directory
-setwd("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva")
+setwd("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG")
 
 # Load TxDb
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
 
 # Read narrow peak files
-peak_files <- c(TES="results/05_peaks_narrow/TES_peaks.narrowPeak",
-                TESmut="results/05_peaks_narrow/TESmut_peaks.narrowPeak",
-                TEAD1="results/05_peaks_narrow/TEAD1_peaks.narrowPeak")
+peak_files <- c(
+    TES = "results/05_peaks_narrow/TES_peaks.narrowPeak",
+    TESmut = "results/05_peaks_narrow/TESmut_peaks.narrowPeak",
+    TEAD1 = "results/05_peaks_narrow/TEAD1_peaks.narrowPeak"
+)
 
 peak_list <- lapply(peak_files, readPeakFile)
 
@@ -32,28 +34,28 @@ peak_list <- lapply(peak_list, function(peaks) {
 })
 
 # Annotate narrow peaks
-anno_list <- lapply(peak_list, annotatePeak, tssRegion=c(-3000, 3000), TxDb=txdb)
+anno_list <- lapply(peak_list, annotatePeak, tssRegion = c(-3000, 3000), TxDb = txdb)
 
 # Create output directory
 dir.create("results/07_analysis_narrow", recursive = TRUE, showWarnings = FALSE)
 
 # Plot annotation statistics
-pdf("results/07_analysis_narrow/peak_annotation_barplot.pdf", width=12, height=8)
+pdf("results/07_analysis_narrow/peak_annotation_barplot.pdf", width = 12, height = 8)
 plotAnnoBar(anno_list)
 dev.off()
 
 # Convert to PNG
-png("results/07_analysis_narrow/peak_annotation_barplot.png", width=12, height=8, units="in", res=300)
+png("results/07_analysis_narrow/peak_annotation_barplot.png", width = 12, height = 8, units = "in", res = 300)
 plotAnnoBar(anno_list)
 dev.off()
 
 # Distance to TSS plot
-pdf("results/07_analysis_narrow/peak_distance_to_tss.pdf", width=12, height=8)
+pdf("results/07_analysis_narrow/peak_distance_to_tss.pdf", width = 12, height = 8)
 plotDistToTSS(anno_list)
 dev.off()
 
 # Convert to PNG
-png("results/07_analysis_narrow/peak_distance_to_tss.png", width=12, height=8, units="in", res=300)
+png("results/07_analysis_narrow/peak_distance_to_tss.png", width = 12, height = 8, units = "in", res = 300)
 plotDistToTSS(anno_list)
 dev.off()
 
@@ -76,14 +78,14 @@ if ("TES" %in% names(anno_list) && "TEAD1" %in% names(anno_list)) {
 
     # Convert ENTREZ IDs to SYMBOLs
     if (length(tes_gene_ids) > 0) {
-        tes_symbols <- bitr(tes_gene_ids, fromType="ENTREZID", toType="SYMBOL", OrgDb=org.Hs.eg.db)
+        tes_symbols <- bitr(tes_gene_ids, fromType = "ENTREZID", toType = "SYMBOL", OrgDb = org.Hs.eg.db)
         tes_genes <- tes_symbols$SYMBOL
     } else {
         tes_genes <- character(0)
     }
 
     if (length(tead1_gene_ids) > 0) {
-        tead1_symbols <- bitr(tead1_gene_ids, fromType="ENTREZID", toType="SYMBOL", OrgDb=org.Hs.eg.db)
+        tead1_symbols <- bitr(tead1_gene_ids, fromType = "ENTREZID", toType = "SYMBOL", OrgDb = org.Hs.eg.db)
         tead1_genes <- tead1_symbols$SYMBOL
     } else {
         tead1_genes <- character(0)
@@ -100,28 +102,33 @@ if ("TES" %in% names(anno_list) && "TEAD1" %in% names(anno_list)) {
 
     # Save gene lists
     write.table(common_genes, "results/07_analysis_narrow/TES_TEAD1_common_genes.txt",
-                quote=FALSE, row.names=FALSE, col.names=FALSE)
+        quote = FALSE, row.names = FALSE, col.names = FALSE
+    )
     write.table(tes_specific, "results/07_analysis_narrow/TES_specific_genes.txt",
-                quote=FALSE, row.names=FALSE, col.names=FALSE)
+        quote = FALSE, row.names = FALSE, col.names = FALSE
+    )
     write.table(tead1_specific, "results/07_analysis_narrow/TEAD1_specific_genes.txt",
-                quote=FALSE, row.names=FALSE, col.names=FALSE)
+        quote = FALSE, row.names = FALSE, col.names = FALSE
+    )
 
     # GO enrichment for TES target genes
     if (length(tes_gene_ids) > 10) {
-        ego_tes <- enrichGO(gene = na.omit(tes_gene_ids),
-                        OrgDb = org.Hs.eg.db,
-                        keyType = 'ENTREZID',
-                        ont = "BP",
-                        pAdjustMethod = "BH",
-                        qvalueCutoff = 0.05)
+        ego_tes <- enrichGO(
+            gene = na.omit(tes_gene_ids),
+            OrgDb = org.Hs.eg.db,
+            keyType = "ENTREZID",
+            ont = "BP",
+            pAdjustMethod = "BH",
+            qvalueCutoff = 0.05
+        )
 
         if (!is.null(ego_tes) && nrow(ego_tes@result) > 0) {
-            pdf("results/07_analysis_narrow/TES_GO_enrichment.pdf", width=12, height=10)
-            print(dotplot(ego_tes, showCategory=20) + ggtitle("TES GO Enrichment - Biological Process"))
+            pdf("results/07_analysis_narrow/TES_GO_enrichment.pdf", width = 12, height = 10)
+            print(dotplot(ego_tes, showCategory = 20) + ggtitle("TES GO Enrichment - Biological Process"))
             dev.off()
 
-            png("results/07_analysis_narrow/TES_GO_enrichment.png", width=12, height=10, units="in", res=300)
-            print(dotplot(ego_tes, showCategory=20) + ggtitle("TES GO Enrichment - Biological Process"))
+            png("results/07_analysis_narrow/TES_GO_enrichment.png", width = 12, height = 10, units = "in", res = 300)
+            print(dotplot(ego_tes, showCategory = 20) + ggtitle("TES GO Enrichment - Biological Process"))
             dev.off()
 
             # Save GO results
@@ -133,20 +140,22 @@ if ("TES" %in% names(anno_list) && "TEAD1" %in% names(anno_list)) {
 
     # GO enrichment for TEAD1 target genes
     if (length(tead1_gene_ids) > 10) {
-        ego_tead1 <- enrichGO(gene = na.omit(tead1_gene_ids),
-                          OrgDb = org.Hs.eg.db,
-                          keyType = 'ENTREZID',
-                          ont = "BP",
-                          pAdjustMethod = "BH",
-                          qvalueCutoff = 0.05)
+        ego_tead1 <- enrichGO(
+            gene = na.omit(tead1_gene_ids),
+            OrgDb = org.Hs.eg.db,
+            keyType = "ENTREZID",
+            ont = "BP",
+            pAdjustMethod = "BH",
+            qvalueCutoff = 0.05
+        )
 
         if (!is.null(ego_tead1) && nrow(ego_tead1@result) > 0) {
-            pdf("results/07_analysis_narrow/TEAD1_GO_enrichment.pdf", width=12, height=10)
-            print(dotplot(ego_tead1, showCategory=20) + ggtitle("TEAD1 GO Enrichment - Biological Process"))
+            pdf("results/07_analysis_narrow/TEAD1_GO_enrichment.pdf", width = 12, height = 10)
+            print(dotplot(ego_tead1, showCategory = 20) + ggtitle("TEAD1 GO Enrichment - Biological Process"))
             dev.off()
 
-            png("results/07_analysis_narrow/TEAD1_GO_enrichment.png", width=12, height=10, units="in", res=300)
-            print(dotplot(ego_tead1, showCategory=20) + ggtitle("TEAD1 GO Enrichment - Biological Process"))
+            png("results/07_analysis_narrow/TEAD1_GO_enrichment.png", width = 12, height = 10, units = "in", res = 300)
+            print(dotplot(ego_tead1, showCategory = 20) + ggtitle("TEAD1 GO Enrichment - Biological Process"))
             dev.off()
 
             # Save GO results
@@ -160,19 +169,20 @@ if ("TES" %in% names(anno_list) && "TEAD1" %in% names(anno_list)) {
     if (length(tes_gene_ids) > 10 && length(tead1_gene_ids) > 10) {
         gene_list <- list(TES = na.omit(tes_gene_ids), TEAD1 = na.omit(tead1_gene_ids))
         compGO <- compareCluster(gene_list,
-                               fun = "enrichGO",
-                               OrgDb = org.Hs.eg.db,
-                               ont = "BP",
-                               pAdjustMethod = "BH",
-                               qvalueCutoff = 0.05)
+            fun = "enrichGO",
+            OrgDb = org.Hs.eg.db,
+            ont = "BP",
+            pAdjustMethod = "BH",
+            qvalueCutoff = 0.05
+        )
 
         if (!is.null(compGO) && nrow(compGO@compareClusterResult) > 0) {
-            pdf("results/07_analysis_narrow/TES_TEAD1_comparative_GO.pdf", width=14, height=10)
-            print(dotplot(compGO, showCategory=10) + ggtitle("TES vs TEAD1 GO Enrichment Comparison"))
+            pdf("results/07_analysis_narrow/TES_TEAD1_comparative_GO.pdf", width = 14, height = 10)
+            print(dotplot(compGO, showCategory = 10) + ggtitle("TES vs TEAD1 GO Enrichment Comparison"))
             dev.off()
 
-            png("results/07_analysis_narrow/TES_TEAD1_comparative_GO.png", width=14, height=10, units="in", res=300)
-            print(dotplot(compGO, showCategory=10) + ggtitle("TES vs TEAD1 GO Enrichment Comparison"))
+            png("results/07_analysis_narrow/TES_TEAD1_comparative_GO.png", width = 14, height = 10, units = "in", res = 300)
+            print(dotplot(compGO, showCategory = 10) + ggtitle("TES vs TEAD1 GO Enrichment Comparison"))
             dev.off()
 
             # Save comparative results
@@ -184,8 +194,10 @@ if ("TES" %in% names(anno_list) && "TEAD1" %in% names(anno_list)) {
 # Save results
 # Save annotated peaks
 for (name in names(anno_list)) {
-    write.csv(as.data.frame(anno_list[[name]]),
-              paste0("results/07_analysis_narrow/", name, "_peaks_annotated.csv"))
+    write.csv(
+        as.data.frame(anno_list[[name]]),
+        paste0("results/07_analysis_narrow/", name, "_peaks_annotated.csv")
+    )
 }
 
 cat("Narrow peak annotation complete!\n")

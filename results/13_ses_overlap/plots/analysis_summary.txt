@@ -1,7 +1,7 @@
 SES Consensus Overlap Analysis - Graphical Summary
 ==================================================
 
-Analysis Date: 2025-09-17
+Analysis Date: 2025-11-25
 Total SES Consensus Peaks: 44726
 
 Key Findings:
@@ -13,7 +13,7 @@ Key Findings:
 
 2. SES COVERAGE:
    - Highest coverage by TEAD1 broad peaks: 22.7%
-   - TESmut shows consistently high overlap rates: 41.9% average
+   - TESmut shows consistently high overlap rates: 42.3% average
 
 3. PEAK TYPE COMPARISON:
    - Broad peaks generally show higher SES coverage than narrow peaks
@@ -30,7 +30,7 @@ Generated plots:
 SES Consensus Overlap Analysis - Graphical Summary
 ==================================================
 
-Analysis Date: 2025-09-17
+Analysis Date: 2025-11-25
 Total SES Consensus Peaks: 44726
 
 Key Findings:
@@ -42,7 +42,7 @@ Key Findings:
 
 2. SES COVERAGE:
    - Highest coverage by TEAD1 broad peaks: 22.7%
-   - TESmut shows consistently high overlap rates: 41.9% average
+   - TESmut shows consistently high overlap rates: 42.3% average
 
 3. PEAK TYPE COMPARISON:
    - Broad peaks generally show higher SES coverage than narrow peaks

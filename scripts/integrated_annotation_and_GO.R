@@ -15,7 +15,7 @@ library(DOSE)
 library(enrichplot)
 
 # Load configuration
-config <- yaml.load_file("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva/config/pipeline_config.yaml")
+config <- yaml.load_file("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG/config/pipeline_config.yaml")
 setwd(config$directories$base)
 
 # Set up directories
@@ -62,13 +62,16 @@ annotate_peaks_comprehensive <- function(peaks, name) {
 
   # Annotate peaks
   anno <- annotatePeak(peaks,
-                      tssRegion = c(-3000, 3000),
-                      TxDb = txdb,
-                      annoDb = "org.Hs.eg.db")
+    tssRegion = c(-3000, 3000),
+    TxDb = txdb,
+    annoDb = "org.Hs.eg.db"
+  )
 
   # Save annotation results
-  write.csv(as.data.frame(anno),
-           file.path(output_dir, paste0(name, "_annotated_peaks.csv")))
+  write.csv(
+    as.data.frame(anno),
+    file.path(output_dir, paste0(name, "_annotated_peaks.csv"))
+  )
 
   return(anno)
 }
@@ -83,17 +86,19 @@ perform_pathway_analysis <- function(gene_list, name, universe = NULL) {
   results_list <- list()
 
   # GO Biological Process
-  ego_bp <- enrichGO(gene = gene_list,
-                    OrgDb = org.Hs.eg.db,
-                    keyType = 'ENTREZID',
-                    ont = "BP",
-                    pAdjustMethod = "BH",
-                    pvalueCutoff = 0.01,
-                    qvalueCutoff = 0.05,
-                    universe = universe,
-                    minGSSize = 10,
-                    maxGSSize = 500,
-                    readable = TRUE)
+  ego_bp <- enrichGO(
+    gene = gene_list,
+    OrgDb = org.Hs.eg.db,
+    keyType = "ENTREZID",
+    ont = "BP",
+    pAdjustMethod = "BH",
+    pvalueCutoff = 0.01,
+    qvalueCutoff = 0.05,
+    universe = universe,
+    minGSSize = 10,
+    maxGSSize = 500,
+    readable = TRUE
+  )
 
   if (!is.null(ego_bp) && nrow(ego_bp@result) > 0) {
     results_list$GO_BP <- ego_bp
@@ -101,15 +106,17 @@ perform_pathway_analysis <- function(gene_list, name, universe = NULL) {
   }
 
   # GO Molecular Function
-  ego_mf <- enrichGO(gene = gene_list,
-                    OrgDb = org.Hs.eg.db,
-                    keyType = 'ENTREZID',
-                    ont = "MF",
-                    pAdjustMethod = "BH",
-                    pvalueCutoff = 0.01,
-                    qvalueCutoff = 0.05,
-                    universe = universe,
-                    readable = TRUE)
+  ego_mf <- enrichGO(
+    gene = gene_list,
+    OrgDb = org.Hs.eg.db,
+    keyType = "ENTREZID",
+    ont = "MF",
+    pAdjustMethod = "BH",
+    pvalueCutoff = 0.01,
+    qvalueCutoff = 0.05,
+    universe = universe,
+    readable = TRUE
+  )
 
   if (!is.null(ego_mf) && nrow(ego_mf@result) > 0) {
     results_list$GO_MF <- ego_mf
@@ -117,10 +124,12 @@ perform_pathway_analysis <- function(gene_list, name, universe = NULL) {
   }
 
   # KEGG Pathway Analysis
-  kegg_result <- enrichKEGG(gene = gene_list,
-                           organism = 'hsa',
-                           pvalueCutoff = 0.05,
-                           qvalueCutoff = 0.1)
+  kegg_result <- enrichKEGG(
+    gene = gene_list,
+    organism = "hsa",
+    pvalueCutoff = 0.05,
+    qvalueCutoff = 0.1
+  )
 
   if (!is.null(kegg_result) && nrow(kegg_result@result) > 0) {
     results_list$KEGG <- kegg_result
@@ -128,10 +137,12 @@ perform_pathway_analysis <- function(gene_list, name, universe = NULL) {
   }
 
   # Reactome Pathway Analysis
-  reactome_result <- enrichPathway(gene = gene_list,
-                                  pvalueCutoff = 0.05,
-                                  qvalueCutoff = 0.1,
-                                  readable = TRUE)
+  reactome_result <- enrichPathway(
+    gene = gene_list,
+    pvalueCutoff = 0.05,
+    qvalueCutoff = 0.1,
+    readable = TRUE
+  )
 
   if (!is.null(reactome_result) && nrow(reactome_result@result) > 0) {
     results_list$Reactome <- reactome_result
@@ -156,25 +167,28 @@ create_pathway_plots <- function(pathway_results, name) {
 
     # Dotplot
     p1 <- dotplot(result, showCategory = 15, font.size = 11) +
-          ggtitle(paste(name, "-", analysis_type, "Enrichment")) +
-          theme_classic()
+      ggtitle(paste(name, "-", analysis_type, "Enrichment")) +
+      theme_classic()
     plot_list[[paste0(analysis_type, "_dot")]] <- p1
 
     # Barplot
     p2 <- barplot(result, showCategory = 10) +
-          ggtitle(paste(name, "-", analysis_type, "Top Terms")) +
-          theme_classic()
+      ggtitle(paste(name, "-", analysis_type, "Top Terms")) +
+      theme_classic()
     plot_list[[paste0(analysis_type, "_bar")]] <- p2
 
     # Network plot for GO terms
     if (analysis_type %in% c("GO_BP", "GO_MF") && nrow(result@result) >= 5) {
-      tryCatch({
-        p3 <- emapplot(pairwise_termsim(result), showCategory = 20) +
-              ggtitle(paste(name, "-", analysis_type, "Network"))
-        plot_list[[paste0(analysis_type, "_network")]] <- p3
-      }, error = function(e) {
-        cat("Could not create network plot for", analysis_type, ":", e$message, "\n")
-      })
+      tryCatch(
+        {
+          p3 <- emapplot(pairwise_termsim(result), showCategory = 20) +
+            ggtitle(paste(name, "-", analysis_type, "Network"))
+          plot_list[[paste0(analysis_type, "_network")]] <- p3
+        },
+        error = function(e) {
+          cat("Could not create network plot for", analysis_type, ":", e$message, "\n")
+        }
+      )
     }
   }
 
@@ -203,7 +217,7 @@ for (contrast_info in config$contrasts) {
   if (!is.null(diff_peaks)) {
     # Separate up and down-regulated peaks
     up_peaks <- diff_peaks[diff_peaks$fold_change > 1.5]
-    down_peaks <- diff_peaks[diff_peaks$fold_change < 1/1.5]
+    down_peaks <- diff_peaks[diff_peaks$fold_change < 1 / 1.5]
 
     # Annotate peaks
     all_anno <- annotate_peaks_comprehensive(diff_peaks, paste0(contrast_name, "_all"))
@@ -252,7 +266,7 @@ if (!is.null(tes_vs_tead1_peaks)) {
   tes_specific_peaks <- tes_vs_tead1_peaks[tes_vs_tead1_peaks$fold_change > 1.5 & tes_vs_tead1_peaks$padj < 0.05]
 
   # TEAD1-specific: significantly higher in TEAD1
-  tead1_specific_peaks <- tes_vs_tead1_peaks[tes_vs_tead1_peaks$fold_change < 1/1.5 & tes_vs_tead1_peaks$padj < 0.05]
+  tead1_specific_peaks <- tes_vs_tead1_peaks[tes_vs_tead1_peaks$fold_change < 1 / 1.5 & tes_vs_tead1_peaks$padj < 0.05]
 
   if (length(tes_specific_peaks) > 0) {
     tes_specific_anno <- annotate_peaks_comprehensive(tes_specific_peaks, "TES_specific")
@@ -261,9 +275,10 @@ if (!is.null(tes_vs_tead1_peaks)) {
       tes_specific_genes <- tes_specific_genes[!is.na(tes_specific_genes)]
 
       # Save TES-specific genes
-      tes_gene_symbols <- bitr(tes_specific_genes, fromType="ENTREZID", toType="SYMBOL", OrgDb=org.Hs.eg.db)
+      tes_gene_symbols <- bitr(tes_specific_genes, fromType = "ENTREZID", toType = "SYMBOL", OrgDb = org.Hs.eg.db)
       write.table(tes_gene_symbols$SYMBOL, file.path(output_dir, "TES_specific_genes.txt"),
-                 quote=FALSE, row.names=FALSE, col.names=FALSE)
+        quote = FALSE, row.names = FALSE, col.names = FALSE
+      )
 
       # Comprehensive pathway analysis
       tes_pathways <- perform_pathway_analysis(tes_specific_genes, "TES_specific")
@@ -278,9 +293,10 @@ if (!is.null(tes_vs_tead1_peaks)) {
       tead1_specific_genes <- tead1_specific_genes[!is.na(tead1_specific_genes)]
 
       # Save TEAD1-specific genes
-      tead1_gene_symbols <- bitr(tead1_specific_genes, fromType="ENTREZID", toType="SYMBOL", OrgDb=org.Hs.eg.db)
+      tead1_gene_symbols <- bitr(tead1_specific_genes, fromType = "ENTREZID", toType = "SYMBOL", OrgDb = org.Hs.eg.db)
       write.table(tead1_gene_symbols$SYMBOL, file.path(output_dir, "TEAD1_specific_genes.txt"),
-                 quote=FALSE, row.names=FALSE, col.names=FALSE)
+        quote = FALSE, row.names = FALSE, col.names = FALSE
+      )
 
       # Comprehensive pathway analysis
       tead1_pathways <- perform_pathway_analysis(tead1_specific_genes, "TEAD1_specific")

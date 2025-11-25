@@ -6,15 +6,17 @@ library(ggplot2)
 library(GenomeInfoDb)
 
 # Set working directory
-setwd("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva")
+setwd("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG")
 
 # Load TxDb
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
 
 # Read broad peak files
-peak_files <- c(TES="results/05_peaks_broad/TES_peaks.broadPeak",
-                TESmut="results/05_peaks_broad/TESmut_peaks.broadPeak",
-                TEAD1="results/05_peaks_broad/TEAD1_peaks.broadPeak")
+peak_files <- c(
+    TES = "results/05_peaks_broad/TES_peaks.broadPeak",
+    TESmut = "results/05_peaks_broad/TESmut_peaks.broadPeak",
+    TEAD1 = "results/05_peaks_broad/TEAD1_peaks.broadPeak"
+)
 
 peak_list <- lapply(peak_files, readPeakFile)
 
@@ -32,28 +34,28 @@ peak_list <- lapply(peak_list, function(peaks) {
 })
 
 # Annotate broad peaks
-anno_list <- lapply(peak_list, annotatePeak, tssRegion=c(-3000, 3000), TxDb=txdb)
+anno_list <- lapply(peak_list, annotatePeak, tssRegion = c(-3000, 3000), TxDb = txdb)
 
 # Create output directory
 dir.create("results/07_analysis_broad", recursive = TRUE, showWarnings = FALSE)
 
 # Plot annotation statistics
-pdf("results/07_analysis_broad/peak_annotation_barplot.pdf", width=12, height=8)
+pdf("results/07_analysis_broad/peak_annotation_barplot.pdf", width = 12, height = 8)
 plotAnnoBar(anno_list)
 dev.off()
 
 # Convert to PNG
-png("results/07_analysis_broad/peak_annotation_barplot.png", width=12, height=8, units="in", res=300)
+png("results/07_analysis_broad/peak_annotation_barplot.png", width = 12, height = 8, units = "in", res = 300)
 plotAnnoBar(anno_list)
 dev.off()
 
 # Distance to TSS plot
-pdf("results/07_analysis_broad/peak_distance_to_tss.pdf", width=12, height=8)
+pdf("results/07_analysis_broad/peak_distance_to_tss.pdf", width = 12, height = 8)
 plotDistToTSS(anno_list)
 dev.off()
 
 # Convert to PNG
-png("results/07_analysis_broad/peak_distance_to_tss.png", width=12, height=8, units="in", res=300)
+png("results/07_analysis_broad/peak_distance_to_tss.png", width = 12, height = 8, units = "in", res = 300)
 plotDistToTSS(anno_list)
 dev.off()
 
@@ -76,14 +78,14 @@ if ("TES" %in% names(anno_list) && "TEAD1" %in% names(anno_list)) {
 
     # Convert ENTREZ IDs to SYMBOLs
     if (length(tes_gene_ids) > 0) {
-        tes_symbols <- bitr(tes_gene_ids, fromType="ENTREZID", toType="SYMBOL", OrgDb=org.Hs.eg.db)
+        tes_symbols <- bitr(tes_gene_ids, fromType = "ENTREZID", toType = "SYMBOL", OrgDb = org.Hs.eg.db)
         tes_genes <- tes_symbols$SYMBOL
     } else {
         tes_genes <- character(0)
     }
 
     if (length(tead1_gene_ids) > 0) {
-        tead1_symbols <- bitr(tead1_gene_ids, fromType="ENTREZID", toType="SYMBOL", OrgDb=org.Hs.eg.db)
+        tead1_symbols <- bitr(tead1_gene_ids, fromType = "ENTREZID", toType = "SYMBOL", OrgDb = org.Hs.eg.db)
         tead1_genes <- tead1_symbols$SYMBOL
     } else {
         tead1_genes <- character(0)
@@ -100,27 +102,32 @@ if ("TES" %in% names(anno_list) && "TEAD1" %in% names(anno_list)) {
 
     # Save gene lists
     write.table(common_genes, "results/07_analysis_broad/TES_TEAD1_common_genes.txt",
-                quote=FALSE, row.names=FALSE, col.names=FALSE)
+        quote = FALSE, row.names = FALSE, col.names = FALSE
+    )
     write.table(tes_specific, "results/07_analysis_broad/TES_specific_genes.txt",
-                quote=FALSE, row.names=FALSE, col.names=FALSE)
+        quote = FALSE, row.names = FALSE, col.names = FALSE
+    )
     write.table(tead1_specific, "results/07_analysis_broad/TEAD1_specific_genes.txt",
-                quote=FALSE, row.names=FALSE, col.names=FALSE)
+        quote = FALSE, row.names = FALSE, col.names = FALSE
+    )
 
     # GO enrichment for TES target genes
-    ego <- enrichGO(gene = na.omit(tes_gene_ids),
-                    OrgDb = org.Hs.eg.db,
-                    keyType = 'ENTREZID',
-                    ont = "BP",
-                    pAdjustMethod = "BH",
-                    qvalueCutoff = 0.05)
+    ego <- enrichGO(
+        gene = na.omit(tes_gene_ids),
+        OrgDb = org.Hs.eg.db,
+        keyType = "ENTREZID",
+        ont = "BP",
+        pAdjustMethod = "BH",
+        qvalueCutoff = 0.05
+    )
 
     if (!is.null(ego)) {
-        pdf("results/07_analysis_broad/TES_GO_enrichment.pdf", width=10, height=8)
-        dotplot(ego, showCategory=20)
+        pdf("results/07_analysis_broad/TES_GO_enrichment.pdf", width = 10, height = 8)
+        dotplot(ego, showCategory = 20)
         dev.off()
 
-        png("results/07_analysis_broad/TES_GO_enrichment.png", width=10, height=8, units="in", res=300)
-        dotplot(ego, showCategory=20)
+        png("results/07_analysis_broad/TES_GO_enrichment.png", width = 10, height = 8, units = "in", res = 300)
+        dotplot(ego, showCategory = 20)
         dev.off()
     }
 }
@@ -128,8 +135,10 @@ if ("TES" %in% names(anno_list) && "TEAD1" %in% names(anno_list)) {
 # Save results - standardized naming
 # Save annotated peaks
 for (name in names(anno_list)) {
-    write.csv(as.data.frame(anno_list[[name]]),
-              paste0("results/07_analysis_broad/", name, "_peaks_annotated.csv"))
+    write.csv(
+        as.data.frame(anno_list[[name]]),
+        paste0("results/07_analysis_broad/", name, "_peaks_annotated.csv")
+    )
 }
 
 cat("Broad peak annotation complete!\n")
