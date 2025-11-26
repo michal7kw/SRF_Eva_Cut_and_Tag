@@ -128,7 +128,13 @@ perform_overlap() {
     # Calculate statistics
     local total_peaks=$(wc -l < ${peak_file})
     local overlapping_peaks=$(cut -f1-3 ${overlap_file} | sort -u | wc -l)
-    local ses_peaks_overlapped=$(cut -f13-15 ${overlap_file} | sort -u | wc -l)
+
+    # Dynamically determine SES peak columns based on input file column count
+    # SES columns start after the peak file columns
+    local peak_cols=$(head -1 ${temp_peak_file} | awk '{print NF}')
+    local ses_start_col=$((peak_cols + 1))
+    local ses_end_col=$((peak_cols + 3))
+    local ses_peaks_overlapped=$(cut -f${ses_start_col}-${ses_end_col} ${overlap_file} | sort -u | wc -l)
     local total_ses_peaks=$(wc -l < ${SES_CONSENSUS})
 
     # Calculate percentages
