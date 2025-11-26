@@ -1,4 +1,4 @@
-Comparison	Overlap	First_Only	Second_Only	First_Total	Second_Total	Overlap_Percent_First	Overlap_Percent_Second
-TES vs TESmut	0	0	0	17601	13842	0	0
-TES vs TEAD1	0	0	0	17601	11012	0	0
-TESmut vs TEAD1	0	0	0	13842	11012	0	0
+Comparison	Direct_Overlap	Summit_Overlap	Reciprocal_50pct	First_Only	Second_Only	First_Total	Second_Total	Overlap_Pct_First	Overlap_Pct_Second	Jaccard_Index
+TES vs TESmut	6577	6381	5037	11219	7331	17796	13871	37	47.4	0.262
+TES vs TEAD1	4263	4024	2792	13533	6943	17796	11163	24	38.2	0.173
+TESmut vs TEAD1	6248	5997	4456	7623	4971	13871	11163	45	56	0.333

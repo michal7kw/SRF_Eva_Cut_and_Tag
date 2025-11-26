@@ -1,5 +1,5 @@
 Cut&Tag Replicate Combination Analysis Summary (NARROW PEAKS - IMPROVED)
-Generated on: Tue Nov 25 07:22:30 PM CET 2025
+Generated on: Wed Nov 26 07:56:33 AM CET 2025
 =========================================================================
 
 === TEAD1 Condition ===
@@ -13,9 +13,9 @@ Peak Calling Results:
 
 Consensus Peak Sets:
 --------------------
-  Summit-based consensus (±250bp): 0 peaks
-  Full overlap consensus (≥2 reps, ≥50bp): 41398 peaks
-  Quality-scored consensus: 41398 peaks (avg score: 5.00519)
+  Summit-based consensus (±250bp): 11144 peaks
+  Full overlap consensus (≥2 reps, ≥50bp): 11163 peaks
+  Quality-scored consensus: 11163 peaks (avg score: 5.53582)
   Combined peaks (original MACS2): 21712 peaks
 
 IDR Reproducibility Analysis:
@@ -36,9 +36,9 @@ Peak Calling Results:
 
 Consensus Peak Sets:
 --------------------
-  Summit-based consensus (±250bp): 0 peaks
-  Full overlap consensus (≥2 reps, ≥50bp): 41398 peaks
-  Quality-scored consensus: 41398 peaks (avg score: 4.33994)
+  Summit-based consensus (±250bp): 17727 peaks
+  Full overlap consensus (≥2 reps, ≥50bp): 17796 peaks
+  Quality-scored consensus: 17796 peaks (avg score: 4.37314)
   Combined peaks (original MACS2): 20204 peaks
 
 IDR Reproducibility Analysis:
@@ -59,9 +59,9 @@ Peak Calling Results:
 
 Consensus Peak Sets:
 --------------------
-  Summit-based consensus (±250bp): 0 peaks
-  Full overlap consensus (≥2 reps, ≥50bp): 41398 peaks
-  Quality-scored consensus: 41398 peaks (avg score: 4.65492)
+  Summit-based consensus (±250bp): 14002 peaks
+  Full overlap consensus (≥2 reps, ≥50bp): 13871 peaks
+  Quality-scored consensus: 13871 peaks (avg score: 5.47605)
   Combined peaks (original MACS2): 15777 peaks
 
 IDR Reproducibility Analysis:

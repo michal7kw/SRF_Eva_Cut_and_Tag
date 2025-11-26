@@ -10,11 +10,22 @@
 # consistently detected across replicates before downstream analysis.
 # ===============================================================================
 
-library(GenomicRanges)
-library(rtracklayer)
-library(ggplot2)
-library(corrplot)
-library(RColorBrewer)
+# Load required packages with graceful handling
+suppressPackageStartupMessages({
+    library(GenomicRanges)
+    library(rtracklayer)
+    library(ggplot2)
+    library(RColorBrewer)
+    library(dplyr)
+})
+
+# Try to load corrplot, use base R heatmap if not available
+use_corrplot <- requireNamespace("corrplot", quietly = TRUE)
+if (use_corrplot) {
+    library(corrplot)
+} else {
+    cat("Note: corrplot package not available, using base R heatmap instead\n")
+}
 
 # Set working directory
 setwd("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG")
@@ -177,12 +188,20 @@ write.csv(overlap_summary, "results/idr_analysis/replicate_overlap_summary.csv",
 
 # Create visualizations
 pdf("results/idr_analysis/correlation_matrix.pdf", width = 10, height = 8)
-corrplot(correlation_matrix,
-    method = "color", type = "upper",
-    order = "hclust", tl.cex = 0.8, tl.col = "black",
-    col = brewer.pal(n = 10, name = "RdYlBu")
-)
-title("Replicate Correlation Matrix\n(Based on Peak Overlap)")
+if (use_corrplot) {
+    corrplot(correlation_matrix,
+        method = "color", type = "upper",
+        order = "hclust", tl.cex = 0.8, tl.col = "black",
+        col = brewer.pal(n = 10, name = "RdYlBu")
+    )
+    title("Replicate Correlation Matrix\n(Based on Peak Overlap)")
+} else {
+    # Use base R heatmap as fallback
+    heatmap(correlation_matrix,
+        col = colorRampPalette(brewer.pal(9, "RdYlBu"))(100),
+        scale = "none",
+        main = "Replicate Correlation Matrix\n(Based on Peak Overlap)")
+}
 dev.off()
 
 # Overlap rate boxplot

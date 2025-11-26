@@ -23,9 +23,8 @@
 #SBATCH --error="./logs/16_run_additional_analyses.err"
 #SBATCH --output="./logs/16_run_additional_analyses.out"
 
-# Set up conda environment with required tools
+# Set up conda environment
 source /opt/common/tools/ric.cosr/miniconda3/bin/activate
-conda activate annotation_enrichment
 
 BASE_DIR="/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG"
 cd ${BASE_DIR}
@@ -35,28 +34,51 @@ echo "Running Additional Cut&Tag Analyses"
 echo "Date: $(date)"
 echo "=========================================="
 
-# 1. Fragment size analysis
+# 1. Fragment size analysis (requires samtools)
 echo ""
 echo "Step 1: Fragment size analysis"
 echo "--------------------------------"
 if [ -f "scripts/fragment_analysis.R" ]; then
     echo "Running fragment size analysis..."
-    Rscript scripts/fragment_analysis.R
-    if [ $? -eq 0 ]; then
-        echo "Fragment size analysis completed successfully"
+    # Use cutntag environment which has samtools
+    conda activate cutntag
+
+    # Verify samtools is available
+    if command -v samtools &> /dev/null; then
+        echo "Using samtools version: $(samtools --version | head -1)"
+        # Export samtools path so R can find it via system()
+        export PATH="$(dirname $(which samtools)):$PATH"
+
+        # Use r_chipseq_env R for plotting packages but keep samtools in PATH
+        SAMTOOLS_PATH=$(which samtools)
+        conda activate r_chipseq_env
+        export PATH="$(dirname $SAMTOOLS_PATH):$PATH"
+
+        Rscript scripts/fragment_analysis.R
+        if [ $? -eq 0 ]; then
+            echo "Fragment size analysis completed successfully"
+        else
+            echo "Warning: Fragment size analysis encountered errors"
+        fi
     else
-        echo "Warning: Fragment size analysis encountered errors"
+        echo "Warning: samtools not found in cutntag environment, skipping fragment analysis"
     fi
 else
     echo "Warning: fragment_analysis.R script not found"
 fi
 
-# 2. Replicate reproducibility analysis
+# 2. Replicate reproducibility analysis (requires Bioconductor packages)
 echo ""
 echo "Step 2: Replicate reproducibility (IDR) analysis"
 echo "------------------------------------------------"
 if [ -f "scripts/idr_analysis.R" ]; then
     echo "Running IDR analysis..."
+    # Use r_chipseq_env which has GenomicRanges and other Bioconductor packages
+    conda activate r_chipseq_env
+
+    # Try to install corrplot if missing (will be skipped if already installed)
+    Rscript -e 'if (!requireNamespace("corrplot", quietly = TRUE)) { install.packages("corrplot", repos="https://cloud.r-project.org", quiet=TRUE) }' 2>/dev/null || true
+
     Rscript scripts/idr_analysis.R
     if [ $? -eq 0 ]; then
         echo "IDR analysis completed successfully"
@@ -66,6 +88,9 @@ if [ -f "scripts/idr_analysis.R" ]; then
 else
     echo "Warning: idr_analysis.R script not found"
 fi
+
+# Switch to annotation environment for GO analysis
+conda activate annotation_enrichment
 
 # 3. Enhanced GO enrichment analysis
 echo ""

@@ -179,16 +179,18 @@ for condition in "${!CONDITIONS[@]}"; do
 
         # Method 1: Summit-based consensus (most accurate for TF binding)
         # Extract summits from each replicate and expand to ±250bp windows
+        summit_files=""
         for i in "${!peak_files[@]}"; do
             # Column 10 in narrowPeak is summit offset from peak start
             awk -v OFS='\t' '{summit=$2+$10; print $1, summit, summit+1, $4, $5, $6, $7, $8, $9}' "${peak_files[$i]}" | \
             bedtools slop -i - -g /beegfs/scratch/ric.sessa/kubacki.michal/COMMONS/genome/hg38.chrom.sizes -b 250 > \
             "$OUTDIR/peaks/${replicate_names[$i]}_summits_expanded.bed"
+            summit_files="$summit_files $OUTDIR/peaks/${replicate_names[$i]}_summits_expanded.bed"
         done
 
-        # Use multiinter for precise overlap tracking
+        # Use multiinter for precise overlap tracking (only for current condition)
         bedtools multiinter \
-            -i "$OUTDIR/peaks/"*"_summits_expanded.bed" \
+            -i $summit_files \
             -names ${replicate_names[@]} \
             > "$OUTDIR/peaks/${condition}_multiinter.bed"
 
@@ -198,14 +200,17 @@ for condition in "${!CONDITIONS[@]}"; do
 
         # Method 2: Full peak overlap with reciprocal requirement
         # Filter individual peaks first (q-value < 0.05, fold enrichment ≥ 2)
+        filtered_files=""
         for i in "${!peak_files[@]}"; do
             awk '$9 >= 1.301 && $7 >= 2' "${peak_files[$i]}" > \
             "$OUTDIR/peaks/${replicate_names[$i]}_filtered.narrowPeak"
+            filtered_files="$filtered_files $OUTDIR/peaks/${replicate_names[$i]}_filtered.narrowPeak"
         done
 
-        # Use multiinter on filtered full peaks
+        # Use multiinter on filtered full peaks (only for current condition)
         bedtools multiinter \
-            -i "$OUTDIR/peaks/"*"_filtered.narrowPeak" \
+            -i $filtered_files \
+            -names ${replicate_names[@]} \
             > "$OUTDIR/peaks/${condition}_multiinter_full.bed"
 
         # Require ≥2 replicates with minimum overlap
@@ -269,7 +274,12 @@ echo "=== Running IDR analysis for replicate reproducibility ==="
 
 # IDR (Irreproducible Discovery Rate) analysis for pairwise replicate comparisons
 # This is the ENCODE standard for assessing replicate quality
+# NOTE: Using relaxed threshold (0.1) and signal.value ranking for Cut&Tag data
 mkdir -p "$OUTDIR/idr"
+
+# IDR parameters optimized for Cut&Tag data
+IDR_THRESHOLD=0.1  # More relaxed than ChIP-seq default (0.05)
+SOFT_IDR_THRESHOLD=0.2  # For rescue ratio calculation
 
 for condition in "${!CONDITIONS[@]}"; do
     echo "Running IDR analysis for $condition..."
@@ -288,51 +298,73 @@ for condition in "${!CONDITIONS[@]}"; do
     # Run pairwise IDR on all replicate combinations
     if [ ${#peak_files[@]} -eq 3 ]; then
         echo "  Running pairwise IDR comparisons for $condition..."
+        echo "  Using IDR threshold: $IDR_THRESHOLD, ranking by signal.value"
 
         # Rep1 vs Rep2
         idr --samples "${peak_files[0]}" "${peak_files[1]}" \
             --input-file-type narrowPeak \
-            --rank p.value \
+            --rank signal.value \
             --output-file "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.txt" \
             --plot \
-            --idr-threshold 0.05 \
+            --idr-threshold $IDR_THRESHOLD \
+            --soft-idr-threshold $SOFT_IDR_THRESHOLD \
             --output-file-type narrowPeak \
-            2> "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.log"
+            2> "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.log" || true
 
         # Rep1 vs Rep3
         idr --samples "${peak_files[0]}" "${peak_files[2]}" \
             --input-file-type narrowPeak \
-            --rank p.value \
+            --rank signal.value \
             --output-file "$OUTDIR/idr/${condition}_rep1_vs_rep3_idr.txt" \
             --plot \
-            --idr-threshold 0.05 \
+            --idr-threshold $IDR_THRESHOLD \
+            --soft-idr-threshold $SOFT_IDR_THRESHOLD \
             --output-file-type narrowPeak \
-            2> "$OUTDIR/idr/${condition}_rep1_vs_rep3_idr.log"
+            2> "$OUTDIR/idr/${condition}_rep1_vs_rep3_idr.log" || true
 
         # Rep2 vs Rep3
         idr --samples "${peak_files[1]}" "${peak_files[2]}" \
             --input-file-type narrowPeak \
-            --rank p.value \
+            --rank signal.value \
             --output-file "$OUTDIR/idr/${condition}_rep2_vs_rep3_idr.txt" \
             --plot \
-            --idr-threshold 0.05 \
+            --idr-threshold $IDR_THRESHOLD \
+            --soft-idr-threshold $SOFT_IDR_THRESHOLD \
             --output-file-type narrowPeak \
-            2> "$OUTDIR/idr/${condition}_rep2_vs_rep3_idr.log"
+            2> "$OUTDIR/idr/${condition}_rep2_vs_rep3_idr.log" || true
 
-        # Create union of high-confidence IDR peaks
-        cat "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.txt" \
-            "$OUTDIR/idr/${condition}_rep1_vs_rep3_idr.txt" \
-            "$OUTDIR/idr/${condition}_rep2_vs_rep3_idr.txt" | \
-        sort -k1,1 -k2,2n | \
-        bedtools merge -i - > "$OUTDIR/idr/${condition}_idr_union.bed"
+        # Check if IDR files exist and have content before processing
+        idr_files_exist=true
+        for idr_file in "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.txt" \
+                        "$OUTDIR/idr/${condition}_rep1_vs_rep3_idr.txt" \
+                        "$OUTDIR/idr/${condition}_rep2_vs_rep3_idr.txt"; do
+            if [ ! -f "$idr_file" ] || [ ! -s "$idr_file" ]; then
+                idr_files_exist=false
+                echo "  Warning: IDR file $idr_file is missing or empty"
+            fi
+        done
 
-        # Create intersection of high-confidence IDR peaks (most stringent)
-        bedtools intersect -a "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.txt" \
-            -b "$OUTDIR/idr/${condition}_rep1_vs_rep3_idr.txt" -u | \
-        bedtools intersect -a - -b "$OUTDIR/idr/${condition}_rep2_vs_rep3_idr.txt" -u > \
-            "$OUTDIR/idr/${condition}_idr_intersection.bed"
+        if [ "$idr_files_exist" = true ]; then
+            # Create union of high-confidence IDR peaks
+            cat "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.txt" \
+                "$OUTDIR/idr/${condition}_rep1_vs_rep3_idr.txt" \
+                "$OUTDIR/idr/${condition}_rep2_vs_rep3_idr.txt" 2>/dev/null | \
+            sort -k1,1 -k2,2n | \
+            bedtools merge -i - > "$OUTDIR/idr/${condition}_idr_union.bed"
 
-        # Count IDR peaks
+            # Create intersection of high-confidence IDR peaks (most stringent)
+            bedtools intersect -a "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.txt" \
+                -b "$OUTDIR/idr/${condition}_rep1_vs_rep3_idr.txt" -u 2>/dev/null | \
+            bedtools intersect -a - -b "$OUTDIR/idr/${condition}_rep2_vs_rep3_idr.txt" -u > \
+                "$OUTDIR/idr/${condition}_idr_intersection.bed" 2>/dev/null
+        else
+            echo "  Warning: Skipping IDR union/intersection due to missing files"
+            # Create empty placeholder files to prevent downstream errors
+            touch "$OUTDIR/idr/${condition}_idr_union.bed"
+            touch "$OUTDIR/idr/${condition}_idr_intersection.bed"
+        fi
+
+        # Count IDR peaks (handle missing/empty files gracefully)
         idr_12=$(wc -l < "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.txt" 2>/dev/null || echo 0)
         idr_13=$(wc -l < "$OUTDIR/idr/${condition}_rep1_vs_rep3_idr.txt" 2>/dev/null || echo 0)
         idr_23=$(wc -l < "$OUTDIR/idr/${condition}_rep2_vs_rep3_idr.txt" 2>/dev/null || echo 0)
@@ -340,25 +372,32 @@ for condition in "${!CONDITIONS[@]}"; do
         idr_intersect=$(wc -l < "$OUTDIR/idr/${condition}_idr_intersection.bed" 2>/dev/null || echo 0)
 
         echo "  $condition IDR results:"
-        echo "    Rep1 vs Rep2 (IDR<0.05): $idr_12 peaks"
-        echo "    Rep1 vs Rep3 (IDR<0.05): $idr_13 peaks"
-        echo "    Rep2 vs Rep3 (IDR<0.05): $idr_23 peaks"
+        echo "    Rep1 vs Rep2 (IDR<$IDR_THRESHOLD): $idr_12 peaks"
+        echo "    Rep1 vs Rep3 (IDR<$IDR_THRESHOLD): $idr_13 peaks"
+        echo "    Rep2 vs Rep3 (IDR<$IDR_THRESHOLD): $idr_23 peaks"
         echo "    Union of all IDR peaks: $idr_union peaks"
         echo "    Intersection (most stringent): $idr_intersect peaks"
+
+        # Check IDR logs for diagnostic info
+        if [ $idr_12 -eq 0 ] && [ $idr_13 -eq 0 ] && [ $idr_23 -eq 0 ]; then
+            echo "  Note: IDR returned 0 peaks - checking logs for details..."
+            grep -i "warning\|error\|peaks\|number" "$OUTDIR/idr/${condition}_rep1_vs_rep2_idr.log" 2>/dev/null | head -5 || true
+        fi
 
     elif [ ${#peak_files[@]} -eq 2 ]; then
         echo "  Running IDR for 2 replicates of $condition..."
         idr --samples "${peak_files[0]}" "${peak_files[1]}" \
             --input-file-type narrowPeak \
-            --rank p.value \
+            --rank signal.value \
             --output-file "$OUTDIR/idr/${condition}_idr.txt" \
             --plot \
-            --idr-threshold 0.05 \
+            --idr-threshold $IDR_THRESHOLD \
+            --soft-idr-threshold $SOFT_IDR_THRESHOLD \
             --output-file-type narrowPeak \
-            2> "$OUTDIR/idr/${condition}_idr.log"
+            2> "$OUTDIR/idr/${condition}_idr.log" || true
 
         idr_count=$(wc -l < "$OUTDIR/idr/${condition}_idr.txt" 2>/dev/null || echo 0)
-        echo "  $condition IDR peaks (IDR<0.05): $idr_count"
+        echo "  $condition IDR peaks (IDR<$IDR_THRESHOLD): $idr_count"
     else
         echo "  Warning: Need at least 2 replicates for IDR analysis"
     fi
@@ -507,9 +546,9 @@ for condition in "${!CONDITIONS[@]}"; do
         idr_13=$(wc -l < "$OUTDIR/idr/${condition}_rep1_vs_rep3_idr.txt" 2>/dev/null || echo 0)
         idr_23=$(wc -l < "$OUTDIR/idr/${condition}_rep2_vs_rep3_idr.txt" 2>/dev/null || echo 0)
 
-        echo "  Rep1 vs Rep2 (IDR<0.05): $idr_12 peaks" >> "$SUMMARY_FILE"
-        echo "  Rep1 vs Rep3 (IDR<0.05): $idr_13 peaks" >> "$SUMMARY_FILE"
-        echo "  Rep2 vs Rep3 (IDR<0.05): $idr_23 peaks" >> "$SUMMARY_FILE"
+        echo "  Rep1 vs Rep2 (IDR<0.1): $idr_12 peaks" >> "$SUMMARY_FILE"
+        echo "  Rep1 vs Rep3 (IDR<0.1): $idr_13 peaks" >> "$SUMMARY_FILE"
+        echo "  Rep2 vs Rep3 (IDR<0.1): $idr_23 peaks" >> "$SUMMARY_FILE"
 
         # Average reproducibility
         avg_idr=$(echo "scale=0; ($idr_12 + $idr_13 + $idr_23) / 3" | bc)
@@ -526,7 +565,7 @@ for condition in "${!CONDITIONS[@]}"; do
         fi
     elif [ -f "$OUTDIR/idr/${condition}_idr.txt" ]; then
         idr_count=$(wc -l < "$OUTDIR/idr/${condition}_idr.txt")
-        echo "  IDR peaks (2 replicates, IDR<0.05): $idr_count" >> "$SUMMARY_FILE"
+        echo "  IDR peaks (2 replicates, IDR<0.1): $idr_count" >> "$SUMMARY_FILE"
     else
         echo "  IDR analysis not performed (insufficient replicates)" >> "$SUMMARY_FILE"
     fi
