@@ -3,11 +3,14 @@
 "TEAD1","narrow",8,39.85,2.02,13.34,4.32
 "TEAD1","narrow_replicate",6,40.42,2.05,11.6,3.4
 "TEAD1_consensus_peaks.bed","narrow",2,43.16,0,9.28,0
+"TEAD1_consensus_peaks_scored.bed","narrow",2,42.06,0,10.48,0
 "TES","broad",8,30.78,2.34,20.58,2.53
 "TES","narrow",8,33.68,1.91,14.11,2.5
 "TES","narrow_replicate",6,33.2,2,13.57,2.71
 "TES_consensus_peaks.bed","narrow",2,35.42,0,11.79,0
+"TES_consensus_peaks_scored.bed","narrow",2,34.78,0,13.67,0
 "TESmut","broad",8,40.69,0.82,19.54,1.46
 "TESmut","narrow",8,43.4,0.36,14.46,0.98
 "TESmut","narrow_replicate",6,43.28,0.33,14.16,0.96
 "TESmut_consensus_peaks.bed","narrow",2,44.81,0,11.96,0
+"TESmut_consensus_peaks_scored.bed","narrow",2,43.96,0,13.53,0
