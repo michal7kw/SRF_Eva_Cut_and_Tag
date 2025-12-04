@@ -91,10 +91,9 @@ calculate_overlap <- function(peaks1, peaks2, min_overlap = 0.5) {
     ))
 }
 
-# Define sample groups and replicates
+# Define sample groups and replicates (TES and TEAD1 only - TESmut removed)
 groups <- list(
     TES = c("TES-1", "TES-2", "TES-3"),
-    TESmut = c("TESmut-1", "TESmut-2", "TESmut-3"),
     TEAD1 = c("TEAD1-1", "TEAD1-2", "TEAD1-3")
 )
 
@@ -164,9 +163,6 @@ overlap_summary <- data.frame(
         sample1 <- strsplit(x, "_vs_")[[1]][1]
         if (sample1 %in% groups$TES) {
             return("TES")
-        }
-        if (sample1 %in% groups$TESmut) {
-            return("TESmut")
         }
         if (sample1 %in% groups$TEAD1) {
             return("TEAD1")

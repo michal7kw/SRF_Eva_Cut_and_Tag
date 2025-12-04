@@ -1,0 +1,1 @@
+cmd = results/05_peaks_narrow/TEAD1_peaks.narrowPeak hg38 results/08_homer_motifs/TEAD1_peaks/ -size 200 -p 8 -len 8,10,12 -S 25

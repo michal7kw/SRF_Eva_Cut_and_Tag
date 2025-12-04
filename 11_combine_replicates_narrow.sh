@@ -98,10 +98,9 @@ done
 
 echo "=== Combining BAM files for average signal computation ==="
 
-# Define conditions and replicates
+# Define conditions and replicates (TES and TEAD1 only - TESmut removed)
 declare -A CONDITIONS=(
     ["TES"]="TES-1 TES-2 TES-3"
-    ["TESmut"]="TESmut-1 TESmut-2 TESmut-3"
     ["TEAD1"]="TEAD1-1 TEAD1-2 TEAD1-3"
 )
 

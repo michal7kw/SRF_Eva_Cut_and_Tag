@@ -11,10 +11,9 @@ setwd("/beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG")
 # Load TxDb
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
 
-# Read narrow peak files
+# Read narrow peak files (TES and TEAD1 only - TESmut removed)
 peak_files <- c(
     TES = "results/05_peaks_narrow/TES_peaks.narrowPeak",
-    TESmut = "results/05_peaks_narrow/TESmut_peaks.narrowPeak",
     TEAD1 = "results/05_peaks_narrow/TEAD1_peaks.narrowPeak"
 )
 

@@ -108,9 +108,9 @@ select_best_peak_file() {
     fi
 }
 
-# Define conditions and select peak files
+# Define conditions and select peak files (TES and TEAD1 only - TESmut removed)
 echo "=== Selecting optimal peak sets for pairwise comparison ==="
-CONDITIONS=("TES" "TESmut" "TEAD1")
+CONDITIONS=("TES" "TEAD1")
 declare -A PEAK_FILES
 
 for condition in "${CONDITIONS[@]}"; do
