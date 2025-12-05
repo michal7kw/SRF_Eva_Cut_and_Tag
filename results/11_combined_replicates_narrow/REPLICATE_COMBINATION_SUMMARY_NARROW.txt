@@ -1,5 +1,5 @@
 Cut&Tag Replicate Combination Analysis Summary (NARROW PEAKS - IMPROVED)
-Generated on: Wed Nov 26 09:03:38 AM CET 2025
+Generated on: Fri Dec  5 11:57:44 AM CET 2025
 =========================================================================
 
 === TEAD1 Condition ===
@@ -40,29 +40,6 @@ Consensus Peak Sets:
   Full overlap consensus (≥2 reps, ≥50bp): 17796 peaks
   Quality-scored consensus: 17796 peaks (avg score: 4.37314)
   Combined peaks (original MACS2): 20204 peaks
-
-IDR Reproducibility Analysis:
-------------------------------
-  IDR analysis not performed (insufficient replicates)
-
-Quality Metrics:
-----------------
-
-=== TESmut Condition ===
-Total reads in merged BAM: 49898406
-
-Peak Calling Results:
----------------------
-  TESmut-1: 13345 peaks
-  TESmut-2: 15544 peaks
-  TESmut-3: 15260 peaks
-
-Consensus Peak Sets:
---------------------
-  Summit-based consensus (±250bp): 14002 peaks
-  Full overlap consensus (≥2 reps, ≥50bp): 13871 peaks
-  Quality-scored consensus: 13871 peaks (avg score: 5.47605)
-  Combined peaks (original MACS2): 15777 peaks
 
 IDR Reproducibility Analysis:
 ------------------------------

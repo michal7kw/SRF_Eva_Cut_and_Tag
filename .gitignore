@@ -9,8 +9,8 @@ logs/
 *.bed
 *.bw
 # *.narrowPeak
-*.motif
-*.motif*
+# *.motif
+# *.motif*
 *.tmp
 
 todo.md
@@ -19,11 +19,11 @@ CLAUDE.md
 
 results/old
 
-results/07_analysis_broad/TEAD1_motifs/
-results/07_analysis_broad/TES_motifs/
+# results/07_analysis_broad/TEAD1_motifs/
+# results/07_analysis_broad/TES_motifs/
 
-results/07_analysis_narrow/TEAD1_motifs/
-results/07_analysis_narrow/TES_motifs/
+# results/07_analysis_narrow/TEAD1_motifs/
+# results/07_analysis_narrow/TES_motifs/
 
 
 # Ignore all Markdown files

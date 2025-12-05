@@ -5,43 +5,43 @@ library(gridExtra)
 
 # Peak counts from shell script
 tes_total=17796
-tesmut_total=13871
+tesmut_total=0
 tead1_total=11163
 
 # Direct overlap counts (peaks with any overlap)
-tes_overlap_tesmut=6577
-tesmut_overlap_tes=6540
+tes_overlap_tesmut=0
+tesmut_overlap_tes=0
 tes_overlap_tead1=4263
 tead1_overlap_tes=4220
-tesmut_overlap_tead1=6248
-tead1_overlap_tesmut=6192
+tesmut_overlap_tead1=0
+tead1_overlap_tesmut=0
 
 # For Venn diagrams, use overlap counts (peaks that have any overlap)
-tes_tesmut_overlap=6577
+tes_tesmut_overlap=0
 tes_tead1_overlap=4263
-tesmut_tead1_overlap=6248
+tesmut_tead1_overlap=0
 
-tes_unique_tesmut=11219
-tesmut_unique_tes=7331
+tes_unique_tesmut=17796
+tesmut_unique_tes=0
 tes_unique_tead1=13533
 tead1_unique_tes=6943
-tesmut_unique_tead1=7623
-tead1_unique_tesmut=4971
+tesmut_unique_tead1=0
+tead1_unique_tesmut=11163
 
 # Summit-based overlaps
-summit_tes_tesmut=6381
+summit_tes_tesmut=0
 summit_tes_tead1=4024
-summit_tesmut_tead1=5997
+summit_tesmut_tead1=0
 
 # Reciprocal overlaps (>=50%)
-reciprocal_tes_tesmut=5037
+reciprocal_tes_tesmut=0
 reciprocal_tes_tead1=2792
-reciprocal_tesmut_tead1=4456
+reciprocal_tesmut_tead1=0
 
 # Jaccard indices
-jaccard_tes_tesmut=0.262
+jaccard_tes_tesmut=0.000
 jaccard_tes_tead1=0.173
-jaccard_tesmut_tead1=0.333
+jaccard_tesmut_tead1=0.000
 
 cat(paste("Narrow Peak counts:\n"))
 cat(paste("TES:", tes_total, "\n"))
