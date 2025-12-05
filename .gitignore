@@ -46,3 +46,5 @@ results/report/
 results/07_analysis_narrow/DiffBind_MA_plots.png
 results/01_fastqc
 results/05_peaks_narrow/*.xls
+*.tmp.*
+*.tmp
