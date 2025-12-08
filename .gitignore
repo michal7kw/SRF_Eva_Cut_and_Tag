@@ -1,0 +1,46 @@
+logs
+90-1222471453
+results/old
+Legacy
+Archive
+.claude
+DATA
+temp
+
+*.parquet
+*.bed
+*.bw
+*.tmp.*
+*.tmp
+*.motifs*
+*.motif
+*.svg
+# *.html
+*.log
+*.zip
+*.gz
+*.bam
+*.bai
+*.xls
+
+# Ignore all Markdown files
+*.md
+
+# ...but keep any README.md (in root or subfolders)
+!README.md
+!**/README.md
+
+results/01_fastqc/*.html
+results/02_trimmed/*.html
+
+results/04_filtered/*_metrics.txt
+
+results/07_analysis_narrow/DiffBind_MA_plots.pdf
+results/07_analysis_narrow/DiffBind_MA_plots.png
+
+results/08_homer_motifs/**/**/*.html
+todo.md
+results/ANALYSIS_SUMMARY.md
+results/12_pairwise_overlap_narrow/PAIRWISE_OVERLAP_SUMMARY.md
+Legacy/CLAUDE_1.md
+SCRIPT_OUTPUT_DOCUMENTATION.md

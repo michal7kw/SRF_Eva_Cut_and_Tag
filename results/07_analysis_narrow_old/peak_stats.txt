@@ -1,0 +1,37 @@
+=== ANALYSIS USING HIGH-QUALITY PEAK SETS ===
+Peak files used:
+  TES: /beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG/results/11_combined_replicates_narrow/peaks/TES_consensus_peaks.bed
+  TESmut: /beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG/results/11_combined_replicates_narrow/peaks/TESmut_consensus_peaks.bed
+  TEAD1: /beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG/results/11_combined_replicates_narrow/peaks/TEAD1_consensus_peaks.bed
+
+=== PEAK COUNTS ===
+TES total peaks: 17601
+TESmut total peaks: 13842
+TEAD1 total peaks: 11012
+
+=== PAIRWISE OVERLAPS ===
+TES-TEAD1 overlapping peaks: 4384
+TES-TESmut overlapping peaks: 6647
+TESmut-TEAD1 overlapping peaks: 6403
+
+=== CONDITION-SPECIFIC PEAKS ===
+TES-specific (vs TEAD1): 13217
+TEAD1-specific (vs TES): 6681
+TESmut-specific (vs TES): 7218
+TES not in TESmut: 10954
+TESmut not in TEAD1: 7439
+TEAD1 not in TESmut: 4702
+
+=== THREE-WAY COMPARISONS ===
+Common to all three conditions: 3177
+TES unique (not in any other): 9747
+TESmut unique (not in any other): 3998
+TEAD1 unique (not in any other): 3532
+
+=== OVERLAP PERCENTAGES ===
+TES-TEAD1 overlap %: 24.90% of TES peaks
+TES-TESmut overlap %: 37.76% of TES peaks
+TESmut-TEAD1 overlap %: 46.25% of TESmut peaks
+
+NOTE: These statistics use high-quality consensus peaks (when available)
+      which provide better reproducibility than raw MACS2 combined peaks.
