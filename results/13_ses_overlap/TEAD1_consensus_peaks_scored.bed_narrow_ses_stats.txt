@@ -1,0 +1,8 @@
+Sample: TEAD1_consensus_peaks_scored.bed
+Peak Type: narrow
+Total TEAD1_consensus_peaks_scored.bed peaks: 11163
+TEAD1_consensus_peaks_scored.bed peaks overlapping SES: 4696
+Percentage of TEAD1_consensus_peaks_scored.bed peaks overlapping SES: 42.06%
+SES peaks overlapped by TEAD1_consensus_peaks_scored.bed: 4690
+Total SES consensus peaks: 44726
+Percentage of SES peaks covered by TEAD1_consensus_peaks_scored.bed: 10.48%

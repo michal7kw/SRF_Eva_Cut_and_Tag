@@ -1,0 +1,47 @@
+logs
+90-1222471453
+results/old
+Legacy
+Archive
+.claude
+DATA
+temp
+
+*.parquet
+*.bed
+*.bw
+*.tmp.*
+*.tmp
+*.motifs*
+*.motif
+*.svg
+# *.html
+*.log
+*.zip
+*.gz
+*.bam
+*.bai
+*.xls
+*.RData
+
+# Ignore all Markdown files
+# *.md
+
+# ...but keep any README.md (in root or subfolders)
+# !README.md
+# !**/README.md
+
+# results/01_fastqc/*.html
+# results/02_trimmed/*.html
+# results/04_filtered/*_metrics.txt
+
+results/07_analysis_narrow/DiffBind_MA_plots.pdf
+results/07_analysis_narrow/DiffBind_MA_plots.png
+results/08_homer_motifs/**/**/*.html
+fig1.png
+Rplots.pdf
+
+################################################################################
+# Local-only documentation (kept on disk, never committed/pushed)
+################################################################################
+*.md

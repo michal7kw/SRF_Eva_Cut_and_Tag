@@ -1,0 +1,28 @@
+=== ANALYSIS USING HIGH-QUALITY PEAK SETS ===
+Peak files used:
+  TES: /beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG/results/11_combined_replicates_narrow/peaks/TES_consensus_peaks_scored.bed
+  TEAD1: /beegfs/scratch/ric.sessa/kubacki.michal/SRF_Eva_top/SRF_Eva_CUTandTAG/results/11_combined_replicates_narrow/peaks/TEAD1_consensus_peaks_scored.bed
+  NOTE: TESmut removed - failed sample
+
+=== PEAK COUNTS ===
+TES total peaks: 17796
+TEAD1 total peaks: 11163
+
+=== PAIRWISE OVERLAPS ===
+TES-TEAD1 overlapping peaks: 4263
+
+=== CONDITION-SPECIFIC PEAKS ===
+TES-specific (vs TEAD1): 13533
+TEAD1-specific (vs TES): 6943
+
+=== UNIQUE PEAKS ===
+TES unique (not in TEAD1): 13533
+TEAD1 unique (not in TES): 6943
+
+=== OVERLAP PERCENTAGES ===
+TES-TEAD1 overlap %: 23.95% of TES peaks
+TEAD1-TES overlap %: 38.18% of TEAD1 peaks
+
+NOTE: These statistics use high-quality consensus peaks (when available)
+      which provide better reproducibility than raw MACS2 combined peaks.
+      TESmut samples have been excluded from analysis (failed sample).

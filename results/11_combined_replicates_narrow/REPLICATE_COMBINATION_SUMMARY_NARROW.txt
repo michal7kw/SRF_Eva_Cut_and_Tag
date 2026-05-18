@@ -1,0 +1,62 @@
+Cut&Tag Replicate Combination Analysis Summary (NARROW PEAKS - IMPROVED)
+Generated on: Fri Dec  5 11:57:44 AM CET 2025
+=========================================================================
+
+=== TEAD1 Condition ===
+Total reads in merged BAM: 9047726
+
+Peak Calling Results:
+---------------------
+  TEAD1-1: 18662 peaks
+  TEAD1-2: 9933 peaks
+  TEAD1-3: 10269 peaks
+
+Consensus Peak Sets:
+--------------------
+  Summit-based consensus (±250bp): 11144 peaks
+  Full overlap consensus (≥2 reps, ≥50bp): 11163 peaks
+  Quality-scored consensus: 11163 peaks (avg score: 5.53582)
+  Combined peaks (original MACS2): 21712 peaks
+
+IDR Reproducibility Analysis:
+------------------------------
+  IDR analysis not performed (insufficient replicates)
+
+Quality Metrics:
+----------------
+
+=== TES Condition ===
+Total reads in merged BAM: 67507468
+
+Peak Calling Results:
+---------------------
+  TES-1: 22218 peaks
+  TES-2: 14642 peaks
+  TES-3: 18357 peaks
+
+Consensus Peak Sets:
+--------------------
+  Summit-based consensus (±250bp): 17727 peaks
+  Full overlap consensus (≥2 reps, ≥50bp): 17796 peaks
+  Quality-scored consensus: 17796 peaks (avg score: 4.37314)
+  Combined peaks (original MACS2): 20204 peaks
+
+IDR Reproducibility Analysis:
+------------------------------
+  IDR analysis not performed (insufficient replicates)
+
+Quality Metrics:
+----------------
+
+
+Recommended Peak Sets for Downstream Analysis:
+-----------------------------------------------
+1. MOST STRINGENT: IDR intersection peaks (highest confidence)
+   Files: idr/*_idr_intersection.bed
+
+2. RECOMMENDED: Quality-scored consensus peaks (balanced stringency)
+   Files: peaks/*_consensus_peaks_scored.bed
+
+3. PERMISSIVE: IDR union or summit-based consensus (maximum coverage)
+   Files: idr/*_idr_union.bed or peaks/*_consensus_summits.bed
+

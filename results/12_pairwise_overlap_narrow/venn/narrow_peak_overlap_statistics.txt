@@ -1,0 +1,2 @@
+Comparison	Direct_Overlap	Summit_Overlap	Reciprocal_50pct	TES_Only	TEAD1_Only	TES_Total	TEAD1_Total	Overlap_Pct_TES	Overlap_Pct_TEAD1	Jaccard_Index
+TES vs TEAD1	4263	4024	2792	13533	6943	17796	11163	24	38.2	0.173
